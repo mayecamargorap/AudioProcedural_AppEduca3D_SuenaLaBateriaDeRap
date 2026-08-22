@@ -858,11 +858,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccd5bf0c3c7554047a9580ae5e724011, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  velocidad: 5
-  AudioHiHat: {fileID: 798635414}
-  VariableFrecuenciaDeMuestreoFsenMuestrasPorSegundo: 44100
-  Duracion: 0.3
-  FrecuenciaCorte: 3000
+  Va_VelocidadDelPersonaje: 3
+  Ob_AudioSourceAudioHiHat: {fileID: 798635414}
+  Co_FrecuenciaDeMuestreo: 44100
+  Co_DuracionDeAudioEnSegundos: 0.3
+  Co_FrecuenciaCorteEnHz: 3000
 --- !u!114 &1574735014
 MonoBehaviour:
   m_ObjectHideFlags: 0
