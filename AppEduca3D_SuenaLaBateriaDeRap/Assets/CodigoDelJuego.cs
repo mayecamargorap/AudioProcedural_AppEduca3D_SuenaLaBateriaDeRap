@@ -257,7 +257,7 @@ public class CodigoDelJuego : MonoBehaviour
             //Va_SeñalFiltrada [-0.70, -0.49, 0.98, 0.20]
 
             #region 2.3.2.6 Envolvente
-            float Va_EnvolventeDeLaMuestra = Mathf.Exp(-50f * Muestra / Co_FrecuenciaDeMuestreo);
+            float Va_EnvolventeDeLaMuestra = Mathf.Exp(-40f * Muestra / Co_FrecuenciaDeMuestreo);
             // Va_EnvolventeEnLaMuestra
             // La envolvente controla cómo cambia el volumen/amplitud del ruido a lo largo del tiempo.
             // Al inicio → a  envolvente que controla la amplitud o volumen cercana a 1 → sonido fuerte;
