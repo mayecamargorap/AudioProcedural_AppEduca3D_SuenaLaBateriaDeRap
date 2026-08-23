@@ -61,6 +61,11 @@ public class CodigoDelJuego : MonoBehaviour
     public float Va_FrecuenciaInicial = 150f; //frecuencia inicial del tono fundamental senosoidal del bombo
     public float Va_VelocidadDeCaida = 10f;   //Velocidad de caida del tono fundamental senosoidal del bombo
     public float Va_FrecuenciaFinal = 75f;
+    public float Va_FrecuenciaDelGolpe = 2000f;
+    public float Va_NivelDelGolpe = 0.25f;
+    public float Va_VelocidadDeCaidaDelGolpe = 150f;
+    //public float Va_NivelDeRuidoDeGolpe = 0.500f; // el ruido tendrá poca intensidad, solo 15% de la señal 
+    //public float Va_VelocidadDeCaidaDelGolpe = 150f; //hace que el ruido desaparezca rápidamente.
 #endregion
 
 #region 2 Metodos
@@ -349,25 +354,46 @@ public class CodigoDelJuego : MonoBehaviour
         // 2. Crear vector donde guardaremos la señal
         float[] Ve_Senal = new float[Co_NumeroDeMuestras];
 
+        //System.Random Ob_RandomMio = new System.Random(); //para generar el ruido del golpe aleatorio 
+
         // 3. Recorrer todas las muestras
         for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
         {
-            #region 2.4.1.Seno con pitch drop   
+            #region 2.4.1Seno con pitch drop   
             // 4. Generar seno variando su frecuencia de 150 a 75 Hz
             float Va_Tiempo = (float)Muestra / Co_FrecuenciaDeMuestreo;
             float Va_Frecuencia = Va_FrecuenciaFinal + (Va_FrecuenciaInicial - Va_FrecuenciaFinal) * Mathf.Exp(-Va_VelocidadDeCaida * Va_Tiempo);
             float Va_SenalSeno = Mathf.Sin( 2f * Mathf.PI * Va_Frecuencia * Muestra / Co_FrecuenciaDeMuestreo );
             #endregion // endregion de 2.4.1.Seno con f variable 
 
+            #region 2.4.2 EnvolventAmplitud
+            //inicia con alto volumen baja super rapido (exponencial) a cero (silencio)
+            float Va_Envolvente = Mathf.Exp( -35f * Muestra / Co_FrecuenciaDeMuestreo );
+            #endregion //endregion 2.4.2 EnvolventAmplitud
 
+            #region 2.4.2 Ruido Como Golpe
+            //inicia con alto volumen baja super rapido (exponencial) a cero (silencio)
+            //float Va_RuidoDelGolpe = (float)(Ob_RandomMio.NextDouble() * 2.0 - 1.0);
+            //float Va_EnvolventeDelGolpe = Mathf.Exp(  -Va_VelocidadDeCaidaDelGolpe * Va_Tiempo);
+            //Va_RuidoDelGolpe *= Va_EnvolventeDelGolpe * Va_NivelDeRuidoDeGolpe;
 
+            float Va_SenalDelGolpe = Mathf.Sin(
+            2f * Mathf.PI * Va_FrecuenciaDelGolpe * Va_Tiempo
+            );
 
+            float Va_EnvolventeDelGolpe = Mathf.Exp(
+                -Va_VelocidadDeCaidaDelGolpe * Va_Tiempo
+            );
 
+            Va_SenalDelGolpe *=
+                Va_EnvolventeDelGolpe *
+                Va_NivelDelGolpe;
 
-
+            #endregion //endregion 2.4.2 Ruido Como Golpe
 
             // 5. Guardar la muestra
-            Ve_Senal[Muestra] = Va_SenalSeno;
+            //Ve_Senal[Muestra] = Va_SenalSeno * Va_Envolvente+ Va_RuidoDelGolpe;
+            Ve_Senal[Muestra] = (Va_SenalSeno * Va_Envolvente) + Va_SenalDelGolpe;
         }
 
         // 6. Crear AudioClip
