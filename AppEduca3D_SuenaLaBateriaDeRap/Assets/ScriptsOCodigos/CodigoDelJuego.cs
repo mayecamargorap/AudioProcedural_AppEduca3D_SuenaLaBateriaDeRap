@@ -25,16 +25,15 @@ public class CodigoDelJuego : MonoBehaviour
 //                         ╚═══════════════════════════════════════════════════════════════╝
 
     // ------------------------------------------ Variables del personaje ------------------------------------------
-
+    [Header("Variables del Personaje")]
     public float Va_VelocidadDelPersonaje = 3f;
 
     // ------------------------------------------ Variables del audio HiHat ------------------------------------------
-
+    [Header("Variables del HiHat")]
     //Variable referencia tipo audio source que apuntara al audio source del instrumento HiHat
     //Lo que le hagamos a esta variable referencia mediante codigo se vera reflejado en el audioSource del HiHat
     //en el hierachy 
     public AudioSource Re_AudioSourceHiHat;
-    public AudioSource Re_AudioSourceBombo;
 
     public int Co_FrecuenciaDeMuestreo = 44100; //en muesttras por segundo
     //La frecuencia de muestreo es cuántas muestras genera o procesa el computador 
@@ -54,6 +53,14 @@ public class CodigoDelJuego : MonoBehaviour
     public float Co_FrecuenciaCorteEnHz = 3000f;
     //Es la frecuencia a partir de la cual se "corta" la señal y solo se dejan pasar las frecuencias superiores a ese valor.
 
+    [Header("Variables del Bombo")]
+    //Variable referencia tipo audio source que apuntara al audio source del instrumento HiHat
+    //Lo que le hagamos a esta variable referencia mediante codigo se vera reflejado en el audioSource del HiHat
+    //en el hierachy 
+    public AudioSource Re_AudioSourceBombo;
+    public float Va_FrecuenciaInicial = 150f; //frecuencia inicial del tono fundamental senosoidal del bombo
+    public float Va_VelocidadDeCaida = 10f;   //Velocidad de caida del tono fundamental senosoidal del bombo
+    public float Va_FrecuenciaFinal = 75f;
 #endregion
 
 #region 2 Metodos
@@ -337,9 +344,7 @@ public class CodigoDelJuego : MonoBehaviour
         Debug.Log("SE GENERÓ BOMBO");
 
         // 1. Calcular número de muestras
-        int Co_NumeroDeMuestras = Mathf.RoundToInt(
-            Co_FrecuenciaDeMuestreo * Co_DuracionDeAudioEnSegundos
-        );
+        int Co_NumeroDeMuestras = Mathf.RoundToInt( Co_FrecuenciaDeMuestreo * Co_DuracionDeAudioEnSegundos  );
 
         // 2. Crear vector donde guardaremos la señal
         float[] Ve_Senal = new float[Co_NumeroDeMuestras];
@@ -347,8 +352,19 @@ public class CodigoDelJuego : MonoBehaviour
         // 3. Recorrer todas las muestras
         for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
         {
-            // 4. Generar seno
-            float Va_SenalSeno = Mathf.Sin(2f * Mathf.PI * 75f * Muestra / Co_FrecuenciaDeMuestreo);
+            #region 2.4.1.Seno con pitch drop   
+            // 4. Generar seno variando su frecuencia de 150 a 75 Hz
+            float Va_Tiempo = (float)Muestra / Co_FrecuenciaDeMuestreo;
+            float Va_Frecuencia = Va_FrecuenciaFinal + (Va_FrecuenciaInicial - Va_FrecuenciaFinal) * Mathf.Exp(-Va_VelocidadDeCaida * Va_Tiempo);
+            float Va_SenalSeno = Mathf.Sin( 2f * Mathf.PI * Va_Frecuencia * Muestra / Co_FrecuenciaDeMuestreo );
+            #endregion // endregion de 2.4.1.Seno con f variable 
+
+
+
+
+
+
+
 
             // 5. Guardar la muestra
             Ve_Senal[Muestra] = Va_SenalSeno;
