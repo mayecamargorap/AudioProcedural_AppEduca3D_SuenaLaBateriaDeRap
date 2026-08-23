@@ -30,7 +30,11 @@ public class CodigoDelJuego : MonoBehaviour
 
     // ------------------------------------------ Variables del audio HiHat ------------------------------------------
 
-    public AudioSource Ob_AudioSourceAudioHiHat;
+    //Variable referencia tipo audio source que apuntara al audio source del instrumento HiHat
+    //Lo que le hagamos a esta variable referencia mediante codigo se vera reflejado en el audioSource del HiHat
+    //en el hierachy 
+    public AudioSource Re_AudioSourceHiHat;
+    public AudioSource Re_AudioSourceBombo;
 
     public int Co_FrecuenciaDeMuestreo = 44100; //en muesttras por segundo
     //La frecuencia de muestreo es cuántas muestras genera o procesa el computador 
@@ -77,11 +81,17 @@ public class CodigoDelJuego : MonoBehaviour
 
         transform.Translate(Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime);
 
-        // GENERAR HI-HAT
-        if (Input.GetKeyDown(KeyCode.Space))
+        // Si la tecla k esta presionada, reproduzca sonido de hihat
+        if (Input.GetKeyDown(KeyCode.K))
         {
            Fu_GenerarHiHat();
         }
+        // Si la tecla L esta presionada, reproduzca sonido de Bombo   
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+           Fu_GenerarBombo();
+        }
+
     }
     #endregion // endregion de Update
 
@@ -308,16 +318,56 @@ public class CodigoDelJuego : MonoBehaviour
         //Le pasamos nuestra señal al vector de datos del AudioClip que acabamos de crear, 
         // para que el AudioClip tenga la señal que generamos.
 
-        Ob_AudioSourceAudioHiHat.clip = ClipHiHat;
+        Re_AudioSourceHiHat.clip = ClipHiHat;
         //Le decimos al Audio Source: “El audio que vas a reproducir es este ClipHiHat que acabamos de generar”.
 
-        Ob_AudioSourceAudioHiHat.Play();
+        Re_AudioSourceHiHat.Play();
         //Le decimos al Audio Source “El audio que vas a reproducir es este ClipHiHat que acabamos de generar”.
 
         #endregion // endregion de llenar señal
     }
 
-    #endregion // endregion de HiHat
+    #endregion // endregion de GenerarHiHat
+
+
+    #region 2.4 Fu_GenerarBombo()
+
+    void Fu_GenerarBombo()
+    {
+        Debug.Log("SE GENERÓ BOMBO");
+
+        // 1. Calcular número de muestras
+        int Co_NumeroDeMuestras = Mathf.RoundToInt(
+            Co_FrecuenciaDeMuestreo * Co_DuracionDeAudioEnSegundos
+        );
+
+        // 2. Crear vector donde guardaremos la señal
+        float[] Ve_Senal = new float[Co_NumeroDeMuestras];
+
+        // 3. Recorrer todas las muestras
+        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+        {
+            // 4. Generar seno
+            float Va_SenalSeno = Mathf.Sin(2f * Mathf.PI * 75f * Muestra / Co_FrecuenciaDeMuestreo);
+
+            // 5. Guardar la muestra
+            Ve_Senal[Muestra] = Va_SenalSeno;
+        }
+
+        // 6. Crear AudioClip
+        AudioClip ClipBombo = AudioClip.Create( "BomboProcedural", Co_NumeroDeMuestras, 1, Co_FrecuenciaDeMuestreo, false);
+
+        // 7. Pasar las muestras al AudioClip
+        ClipBombo.SetData(Ve_Senal, 0);
+
+        // 8. Asignar el clip al AudioSource del bombo
+        Re_AudioSourceBombo.clip = ClipBombo;
+
+        // 9. Reproducir
+        Re_AudioSourceBombo.Play();
+    }
+
+    #endregion //endregion de GenerarBombo
 
 #endregion // endregion de metodos
 
