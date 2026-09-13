@@ -13,6 +13,8 @@
 // prefijo Ve_ → vector
 // prefijo Fu_ → función
 // prefijo Ob_ → objeto
+// prefijo Re_ → referencia
+// prefijo Ar_ → arreglo
 
 using UnityEngine;
 
@@ -35,22 +37,22 @@ public class CodigoDelJuego : MonoBehaviour
     //en el hierachy 
     public AudioSource Re_AudioSourceHiHat;
 
-    public int Co_FrecuenciaDeMuestreo = 44100; //en muesttras por segundo
-    //La frecuencia de muestreo es cuántas muestras genera o procesa el computador 
-    // por segundo, es decir la Va_VelocidadDelPersonaje con que el computador lee o genera la señal.
+    const int Co_FrecuenciaDeMuestreo = 44100; //en muesttras por segundo
+    //La frecuencia de muestreo es cuántas muestras genera el computador 
+    // por segundo, es decir la Va_VelocidadDelPersonaje con que el computador genera la señal.
     //Ejemplo:
-    //Si tenemos una señal de 44.000 muestras entonces N=44.000 muestras
+    //Si tenemos una señal de 44.100 muestras entonces N=44.100 muestras
     //Si tenemos que procesa 1.000 muestras por segundo entonces FS= 1.000 muestrassegundo
     //Lo que nos lleva a deducir que la duración de la señal será:
     // Co_DuracionDeAudioEnSegundos = N / Fs
-    // Co_DuracionDeAudioEnSegundos = 44.000 / 1.000
-    // Co_DuracionDeAudioEnSegundos = 44 segundos
-    // Por lo tanto, la señal tardará 44 segundos en reproducirse.
+    // Co_DuracionDeAudioEnSegundos = 44.100 / 1.000
+    // Co_DuracionDeAudioEnSegundos = 44.1 segundos
+    // Por lo tanto, la señal tardará 44.1 segundos en reproducirse.
     //A mayor frecuencia de muestreo podremos representar la onda auditiva que queremos más 
     // fielmente osea mas precisa, porque vamos a tener más puntos que describen la onda por segundo
 
-    public float Co_DuracionDeAudioEnSegundos = 0.3f; // en segundos
-    public float Co_FrecuenciaCorteEnHz = 3000f;
+    const float Co_DuracionDeAudioEnSegundos = 0.3f; // en segundos
+    const float Co_FrecuenciaCorteEnHz = 3000f;
     //Es la frecuencia a partir de la cual se "corta" la señal y solo se dejan pasar las frecuencias superiores a ese valor.
 
     [Header("Variables del Bombo")]
@@ -93,13 +95,13 @@ public class CodigoDelJuego : MonoBehaviour
 
         transform.Translate(Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime);
 
-        // Si la tecla k esta presionada, reproduzca sonido de hihat
-        if (Input.GetKeyDown(KeyCode.K))
+        // Si la tecla J esta presionada, reproduzca sonido de hihat
+        if (Input.GetKeyDown(KeyCode.J))
         {
            Fu_GenerarHiHat();
         }
-        // Si la tecla L esta presionada, reproduzca sonido de Bombo   
-        if (Input.GetKeyDown(KeyCode.L))
+        // Si la tecla K esta presionada, reproduzca sonido de Bombo   
+        if (Input.GetKeyDown(KeyCode.K))
         {
            Fu_GenerarBombo();
         }
@@ -114,17 +116,17 @@ public class CodigoDelJuego : MonoBehaviour
 
         int Co_NumeroDeMuestras = Mathf.RoundToInt(Co_FrecuenciaDeMuestreo * Co_DuracionDeAudioEnSegundos);
         //numero de muestras = frecuencia de muestreo * duración en segundos
-        //numero de muestras = 44.000 * 0.3
-        //numero de muestras = 13.200 
-        // N = 13.200 muestras
+        //numero de muestras = 44.100 * 0.3
+        //numero de muestras = 13.230 
+        // N = 13.230 muestras
         // VariableNumeroDeMuestras N representa la longitud de la señal en muestras,
         // es decir, cuántos puntos de datos tiene la señal.
 
-        float[] Ve_Senal = new float[Co_NumeroDeMuestras];
+        float[] Ar_Senal = new float[Co_NumeroDeMuestras];
         //creamos un vector de la señal de tipo float con una longitud igual al número de muestras
         //en nuestro caso 
-        // float[] Ve_Senal = new float[13200];
-        // 13.200 muestras, es decir, 13.200 puntos de datos que representan la señal de audio.
+        // float[] Ar_Senal = new float[13230];
+        // 13.230 muestras, es decir, 13.230 puntos de datos que representan la señal de audio.
 
         System.Random Ob_RandomMio = new System.Random();
 
@@ -146,8 +148,8 @@ public class CodigoDelJuego : MonoBehaviour
         // En nuestro caso:
         // VariableTiempoEntreUnaMuestraYLaSiguiente = 1 / 44100 = 0.00002267 segundos
 
-        // 3. Calculamos Co_Alpha
-        float Co_Alpha = Va_FrecuenciaDeCorteDeHzASegundos / (Va_FrecuenciaDeCorteDeHzASegundos + Va_TiempoEntreUnaMuestraYLaSiguiente);
+        // 3. Calculamos Va_Alpha
+        float Va_Alpha = Va_FrecuenciaDeCorteDeHzASegundos / (Va_FrecuenciaDeCorteDeHzASegundos + Va_TiempoEntreUnaMuestraYLaSiguiente);
         // En nuestro caso:
         // VariableAlpha = 0.00005305 segundos / (0.00005305 segundos + 0.00002267 segundos);
         // VariableAlpha = 0.00005305 segundos / 0.00007572 segundos;
@@ -173,8 +175,8 @@ public class CodigoDelJuego : MonoBehaviour
              //...
             // VaRuido[10000] = 1
              //...
-            // VaRuido [13200] = 0.5
-            // hasta completar los 13.200 ciclos del for que representan el # de muestras de la señal de audio.
+            // VaRuido [13230] = 0.5
+            // hasta completar los 13.230  ciclos del for que representan el # de muestras de la señal de audio.
             #endregion // endregion de Ruido
 
 
@@ -187,17 +189,17 @@ public class CodigoDelJuego : MonoBehaviour
             // SenalSeno2= Mathf.Sin (2*π * 7000 * 1 / 44100) = 0.8400
             // SenalSeno3= Mathf.Sin (2*π * 9000 * 1 / 44100) = 0.9586
 
-            // SenalSeno1= Mathf.Sin (2*π * 7000 * 2000 / 44100) = -0.9989
-            // SenalSeno2= Mathf.Sin (2*π * 9000 * 2000 / 44100) = 0.2467
+            // SenalSeno1= Mathf.Sin (2*π * 5000 * 2000 / 44100) = -0.9989
+            // SenalSeno2= Mathf.Sin (2*π * 7000 * 2000 / 44100) = 0.2467
             // SenalSeno3= Mathf.Sin (2*π * 9000 * 2000 / 44100) = 0.8551
 
-            // SenalSeno1= Mathf.Sin (2*π * 7000 * 10000 / 44100) = -0.9733
-            // SenalSeno2= Mathf.Sin (2*π * 9000 * 10000 / 44100) = 0.9479
+            // SenalSeno1= Mathf.Sin (2*π * 5000 * 10000 / 44100) = -0.9733
+            // SenalSeno2= Mathf.Sin (2*π * 7000 * 10000 / 44100) = 0.9479
             // SenalSeno3= Mathf.Sin (2*π * 9000 * 10000 / 44100) = -0.9144
 
-            // SenalSeno1= Mathf.Sin (2*π * 7000 * 13200 / 44100) = 0.9999
-            // SenalSeno2= Mathf.Sin (2*π * 9000 * 13200 / 44100) = -0.9999
-            // SenalSeno3= Mathf.Sin (2*π * 9000 *  13200 / 44100) = 0.9999 
+            // SenalSeno1= Mathf.Sin (2*π * 5000 * 13230 / 44100) = 0.9999
+            // SenalSeno2= Mathf.Sin (2*π * 7000 * 13230 / 44100) = -0.9999
+            // SenalSeno3= Mathf.Sin (2*π * 9000 *  13230/ 44100) = 0.9999 
 
             float Va_SenalSeno1 = Mathf.Sin(2f * Mathf.PI * 5000f * Muestra / Co_FrecuenciaDeMuestreo);
             float Va_SenalSeno2 = Mathf.Sin(2f * Mathf.PI * 7000f * Muestra / Co_FrecuenciaDeMuestreo);
@@ -226,7 +228,7 @@ public class CodigoDelJuego : MonoBehaviour
             // Osea quitar frecuencias graves 
 
             // 4. Calculamos Va_MuestraFiltrada
-            float Va_FiltradoActual = Co_Alpha * (Va_FiltradoAnterior +  Va_RuidoMasSenosActual -  Va_RuidoMasSenosAnterior);
+            float Va_FiltradoActual = Va_Alpha * (Va_FiltradoAnterior +  Va_RuidoMasSenosActual -  Va_RuidoMasSenosAnterior);
 
             // 5. Guardamos valores actuales  para que en el otro ciclo sean los valores anteriores 
             // Se actualizan estos dos valores para que en la siguiente iteración del for 
@@ -243,7 +245,7 @@ public class CodigoDelJuego : MonoBehaviour
 
             // En nuestro caso:
             // vamos a suponer que nuestra Va_SenalRuidoMasSenos es [-1, -0.7, 1.2, 0.5 ] solo para explicar 
-            // porque realmente no son 4 muestras sino 13.200 muestras
+            // porque realmente no son 4 muestras sino 13.230 muestras
             // y asumiremos que Va_Alpha = 0.7009
 
             //Muestra 1:
@@ -258,25 +260,25 @@ public class CodigoDelJuego : MonoBehaviour
             //          Va_RuidoMasSenosAnterior  = -1
             //          Va_FiltradoAnterior            = -0.7009
             //          Va_FiltradoActual               =  Va_Alpha *( Va_FiltradoAnterior+Va_SenalRuidoMasSenos - Va_SenalRuidoMasSenosAnterior)
-            //                                         = -0.4906
+            //                                         = -0.2810
             
             //Muestra 3:
             //          Va_RuidoMasSenosActual          = 1.2
             //          Va_RuidoMasSenosAnterior  = -0.7   
-            //          Va_FiltradoAnterior            = -0.4906
+            //          Va_FiltradoAnterior            = -0.2810
             //          Va_FiltradoActual               =  Va_Alpha *( Va_FiltradoAnterior+Va_SenalRuidoMasSenos - Va_SenalRuidoMasSenosAnterior)
-            //                                         = 0.9878
+            //                                         = 1.1348
 
             //Muestra 4:
             //          Va_RuidoMasSenosActual          = 0.5
             //          Va_RuidoMasSenosAnterior  = 1.2   
-            //          Va_FiltradoAnterior            = 0.9878
+            //          Va_FiltradoAnterior            = 1.1348
             //          Va_FiltradoActual               =  Va_Alpha *( Va_FiltradoAnterior+Va_SenalRuidoMasSenos - Va_SenalRuidoMasSenosAnterior)
-            //                                         = 0.2018
+            //                                         = 0.3047
             
             //De manera que teniamos 
             //Va_SenalRuidoMasSenos es [-1, -0.7, 1.2, 0.5 ] y terminamos con 
-            //Va_SeñalFiltrada [-0.70, -0.49, 0.98, 0.20]
+            //Va_SeñalFiltrada [-0.70, -0.28, 1.13, 0.30]
 
             #region 2.3.2.6 Envolvente
             float Va_EnvolventeDeLaMuestra = Mathf.Exp(-40f * Muestra / Co_FrecuenciaDeMuestreo);
@@ -288,18 +290,18 @@ public class CodigoDelJuego : MonoBehaviour
 
             // Entonces por medio del volumen convertimos el ruido continuo en un golpe corto , 
             // fuerfe y que disminuye rapidamente hacia cero.
-            //Y el 50f controla qué tan rápido ocurre esa caída: mayor valor → caída más rápida; menor valor → caída más lenta   
+            //Y el 40f controla qué tan rápido ocurre esa caída: mayor valor → caída más rápida; menor valor → caída más lenta   
             
             // La envolvente se calcula usando una función exponencial asi
             // En nuestro caso: 
             //En cada ciclo for generaria uno de estos valores:
-            //Va_EnvolventeEnLaMuestraActual = e^(-50*1/44100)     = 0.9988668
-            //Va_EnvolventeEnLaMuestraActual = e^(-50*2000/44100)  = 0.1035631
-            //Va_EnvolventeEnLaMuestraActual = e^(-50*10000/44100) = 0.0000119
-            //Va_EnvolventeEnLaMuestraActual = e^(-50*13200/44100) = 0.0000003
+            //Va_EnvolventeEnLaMuestraActual = e^(-40*1/44100)     = 0.9988668
+            //Va_EnvolventeEnLaMuestraActual = e^(-40*2000/44100)  = 0.1035631
+            //Va_EnvolventeEnLaMuestraActual = e^(-40*10000/44100) = 0.0000119
+            //Va_EnvolventeEnLaMuestraActual = e^(-40*13200/44100) = 0.0000003
 
             // Aplicar ENVOLVENTE 
-            Ve_Senal[Muestra] =  Va_FiltradoActual * Va_EnvolventeDeLaMuestra;
+            Ar_Senal[Muestra] =  Va_FiltradoActual * Va_EnvolventeDeLaMuestra;
             #endregion // endregion de Filtro + Envolvente
         }
 
@@ -326,7 +328,7 @@ public class CodigoDelJuego : MonoBehaviour
         // es decir no se genera mientras se va reproduciendo, sino que se genera completo antes de reproducirse.
         //Es decir, el hi-hat de 0.3 s tiene sus 13.230 muestras disponibles antes de reproducirse.
 
-        ClipHiHat.SetData(Ve_Senal, 0);
+        ClipHiHat.SetData(Ar_Senal, 0);
         //Le pasamos nuestra señal al vector de datos del AudioClip que acabamos de crear, 
         // para que el AudioClip tenga la señal que generamos.
 
@@ -352,18 +354,20 @@ public class CodigoDelJuego : MonoBehaviour
         int Co_NumeroDeMuestras = Mathf.RoundToInt( Co_FrecuenciaDeMuestreo * Co_DuracionDeAudioEnSegundos  );
 
         // 2. Crear vector donde guardaremos la señal
-        float[] Ve_Senal = new float[Co_NumeroDeMuestras];
+        float[] Ar_Senal = new float[Co_NumeroDeMuestras];
 
         //System.Random Ob_RandomMio = new System.Random(); //para generar el ruido del golpe aleatorio 
-
+        
         // 3. Recorrer todas las muestras
+        float Va_Fase = 0f;
         for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
         {
             #region 2.4.1Seno con pitch drop   
             // 4. Generar seno variando su frecuencia de 150 a 75 Hz
             float Va_Tiempo = (float)Muestra / Co_FrecuenciaDeMuestreo;
             float Va_Frecuencia = Va_FrecuenciaFinal + (Va_FrecuenciaInicial - Va_FrecuenciaFinal) * Mathf.Exp(-Va_VelocidadDeCaida * Va_Tiempo);
-            float Va_SenalSeno = Mathf.Sin( 2f * Mathf.PI * Va_Frecuencia * Muestra / Co_FrecuenciaDeMuestreo );
+            Va_Fase +=  2f * Mathf.PI * Va_Frecuencia / Co_FrecuenciaDeMuestreo;
+            float Va_SenalSeno = Mathf.Sin(Va_Fase);
             #endregion // endregion de 2.4.1.Seno con f variable 
 
             #region 2.4.2 EnvolventAmplitud
@@ -371,36 +375,23 @@ public class CodigoDelJuego : MonoBehaviour
             float Va_Envolvente = Mathf.Exp( -35f * Muestra / Co_FrecuenciaDeMuestreo );
             #endregion //endregion 2.4.2 EnvolventAmplitud
 
-            #region 2.4.2 Ruido Como Golpe
+            #region 2.4.2 Señal Seno Como Golpe de ataque + envolvente de golpe 
             //inicia con alto volumen baja super rapido (exponencial) a cero (silencio)
-            //float Va_RuidoDelGolpe = (float)(Ob_RandomMio.NextDouble() * 2.0 - 1.0);
-            //float Va_EnvolventeDelGolpe = Mathf.Exp(  -Va_VelocidadDeCaidaDelGolpe * Va_Tiempo);
-            //Va_RuidoDelGolpe *= Va_EnvolventeDelGolpe * Va_NivelDeRuidoDeGolpe;
-
-            float Va_SenalDelGolpe = Mathf.Sin(
-            2f * Mathf.PI * Va_FrecuenciaDelGolpe * Va_Tiempo
-            );
-
-            float Va_EnvolventeDelGolpe = Mathf.Exp(
-                -Va_VelocidadDeCaidaDelGolpe * Va_Tiempo
-            );
-
-            Va_SenalDelGolpe *=
-                Va_EnvolventeDelGolpe *
-                Va_NivelDelGolpe;
-
-            #endregion //endregion 2.4.2 Ruido Como Golpe
+            float Va_SenalDelGolpe = Mathf.Sin( 2f * Mathf.PI * Va_FrecuenciaDelGolpe * Va_Tiempo );
+            float Va_EnvolventeDelGolpe = Mathf.Exp( -Va_VelocidadDeCaidaDelGolpe * Va_Tiempo);
+            Va_SenalDelGolpe *=  Va_EnvolventeDelGolpe * Va_NivelDelGolpe;
+            #endregion //endregion 2.4.2 Señal Seno Como Golpe de ataque + envolvente de golpe 
 
             // 5. Guardar la muestra
-            //Ve_Senal[Muestra] = Va_SenalSeno * Va_Envolvente+ Va_RuidoDelGolpe;
-            Ve_Senal[Muestra] = (Va_SenalSeno * Va_Envolvente) + Va_SenalDelGolpe;
+            //Ar_Senal[Muestra] = Va_SenalSeno * Va_Envolvente+ Va_RuidoDelGolpe;
+            Ar_Senal[Muestra] = (Va_SenalSeno * Va_Envolvente) + Va_SenalDelGolpe;
         }
 
         // 6. Crear AudioClip
         AudioClip ClipBombo = AudioClip.Create( "BomboProcedural", Co_NumeroDeMuestras, 1, Co_FrecuenciaDeMuestreo, false);
 
         // 7. Pasar las muestras al AudioClip
-        ClipBombo.SetData(Ve_Senal, 0);
+        ClipBombo.SetData(Ar_Senal, 0);
 
         // 8. Asignar el clip al AudioSource del bombo
         Re_AudioSourceBombo.clip = ClipBombo;
