@@ -36,7 +36,6 @@ public class CodigoDelJuego : MonoBehaviour
     //Lo que le hagamos a esta variable referencia mediante codigo se vera reflejado en el audioSource del HiHat
     //en el hierachy 
     public AudioSource Re_AudioSourceHiHat;
-
     const int Co_FrecuenciaDeMuestreo = 44100; //en muesttras por segundo
     //La frecuencia de muestreo es cuántas muestras genera el computador 
     // por segundo, es decir la Va_VelocidadDelPersonaje con que el computador genera la señal.
@@ -50,11 +49,11 @@ public class CodigoDelJuego : MonoBehaviour
     // Por lo tanto, la señal tardará 44.1 segundos en reproducirse.
     //A mayor frecuencia de muestreo podremos representar la onda auditiva que queremos más 
     // fielmente osea mas precisa, porque vamos a tener más puntos que describen la onda por segundo
-
     const float Co_DuracionDeAudioEnSegundos = 0.3f; // en segundos
     const float Co_FrecuenciaCorteEnHz = 3000f;
     //Es la frecuencia a partir de la cual se "corta" la señal y solo se dejan pasar las frecuencias superiores a ese valor.
 
+        // ------------------------------------------ Variables del audio Bombo ------------------------------------------
     [Header("Variables del Bombo")]
     //Variable referencia tipo audio source que apuntara al audio source del instrumento HiHat
     //Lo que le hagamos a esta variable referencia mediante codigo se vera reflejado en el audioSource del HiHat
@@ -68,6 +67,12 @@ public class CodigoDelJuego : MonoBehaviour
     public float Va_VelocidadDeCaidaDelGolpe = 150f;
     //public float Va_NivelDeRuidoDeGolpe = 0.500f; // el ruido tendrá poca intensidad, solo 15% de la señal 
     //public float Va_VelocidadDeCaidaDelGolpe = 150f; //hace que el ruido desaparezca rápidamente.
+
+    // ------------------------------------------ Variables del audio Caja ------------------------------------------
+    [Header("Variables de la Caja")]
+    public AudioSource Re_AudioSourceCaja;
+    public int Co_NumeroDeMuestras = Mathf.RoundToInt(Co_FrecuenciaDeMuestreo * Co_DuracionDeAudioEnSegundos);
+    
 #endregion
 
 #region 2 Metodos
@@ -95,21 +100,26 @@ public class CodigoDelJuego : MonoBehaviour
 
         transform.Translate(Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime);
 
-        // Si la tecla J esta presionada, reproduzca sonido de hihat
-        if (Input.GetKeyDown(KeyCode.J))
+        // Si la tecla G esta presionada, reproduzca sonido de hihat
+        if (Input.GetKeyDown(KeyCode.G))
         {
            Fu_GenerarHiHat();
         }
-        // Si la tecla K esta presionada, reproduzca sonido de Bombo   
-        if (Input.GetKeyDown(KeyCode.K))
+        // Si la tecla H esta presionada, reproduzca sonido de Bombo   
+        if (Input.GetKeyDown(KeyCode.H))
         {
            Fu_GenerarBombo();
+        }
+        // Si la tecla J esta presionada, reproduzca sonido de la caja   
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+           Fu_GenerarCaja();
         }
 
     }
     #endregion // endregion de Update
 
-    #region 2.3 Fu_GenerarHiHat()
+    #region 2.3 Fu_GenerarHIHAT()
     void Fu_GenerarHiHat()
     {
         Debug.Log("SE GENERÓ HI-HAT");
@@ -280,7 +290,7 @@ public class CodigoDelJuego : MonoBehaviour
             //Va_SenalRuidoMasSenos es [-1, -0.7, 1.2, 0.5 ] y terminamos con 
             //Va_SeñalFiltrada [-0.70, -0.28, 1.13, 0.30]
 
-            #region 2.3.2.6 Envolvente
+            #region 2.3.2.6EnvolvExponAmpli
             float Va_EnvolventeDeLaMuestra = Mathf.Exp(-40f * Muestra / Co_FrecuenciaDeMuestreo);
             // Va_EnvolventeEnLaMuestra
             // La envolvente controla cómo cambia el volumen/amplitud del ruido a lo largo del tiempo.
@@ -302,49 +312,53 @@ public class CodigoDelJuego : MonoBehaviour
 
             // Aplicar ENVOLVENTE 
             Ar_Senal[Muestra] =  Va_FiltradoActual * Va_EnvolventeDeLaMuestra;
-            #endregion // endregion de Filtro + Envolvente
+            #endregion // endregion 2.3.2.6 EnvolvExponAmpli
         }
 
-        AudioClip ClipHiHat = AudioClip.Create( "HiHatProcedural", Co_NumeroDeMuestras,  1,  Co_FrecuenciaDeMuestreo, false );
-        // Esta línea crea en memoria un AudioClip VACIO donde después vas a guardar 
-        // las muestras que generaste proceduralmente.
-        //"HiHatProcedural"
-        //→ nombre del AudioClip.
 
-        //VariableNumeroDeMuestras
-        //→ cantidad total de muestras que tendrá el audio.
-        //Ejemplo: 13.230 muestras.
+        #region 2.4.3.CrearAudioReprodu
+            AudioClip ClipHiHat = AudioClip.Create( "HiHatProcedural", Co_NumeroDeMuestras,  1,  Co_FrecuenciaDeMuestreo, false );
+                    // Esta línea crea en memoria un AudioClip VACIO donde después vas a guardar 
+                    // las muestras que generaste proceduralmente.
+                    //"HiHatProcedural"
+                    //→ nombre del AudioClip.
 
-        //1
-        //→ número de canales de audio.
-        //1 = mono.
-        //2 = estéreo.
+                    //VariableNumeroDeMuestras
+                    //→ cantidad total de muestras que tendrá el audio.
+                    //Ejemplo: 13.230 muestras.
 
-        //Co_FrecuenciaDeMuestreoFsenMuestrasPorSegundo        //→ frecuencia de muestreo.
-        //Ejemplo: 44.100 muestras/segundo.
+                    //1
+                    //→ número de canales de audio.
+                    //1 = mono.
+                    //2 = estéreo.
 
-        //false
-        //→ el clip NO se crea como un clip de streaming.
-        // es decir no se genera mientras se va reproduciendo, sino que se genera completo antes de reproducirse.
-        //Es decir, el hi-hat de 0.3 s tiene sus 13.230 muestras disponibles antes de reproducirse.
+                    //Co_FrecuenciaDeMuestreoFsenMuestrasPorSegundo        //→ frecuencia de muestreo.
+                    //Ejemplo: 44.100 muestras/segundo.
 
-        ClipHiHat.SetData(Ar_Senal, 0);
-        //Le pasamos nuestra señal al vector de datos del AudioClip que acabamos de crear, 
-        // para que el AudioClip tenga la señal que generamos.
+                    //false
+                    //→ el clip NO se crea como un clip de streaming.
+                    // es decir no se genera mientras se va reproduciendo, sino que se genera completo antes de reproducirse.
+                    //Es decir, el hi-hat de 0.3 s tiene sus 13.230 muestras disponibles antes de reproducirse.
 
-        Re_AudioSourceHiHat.clip = ClipHiHat;
-        //Le decimos al Audio Source: “El audio que vas a reproducir es este ClipHiHat que acabamos de generar”.
+                    ClipHiHat.SetData(Ar_Senal, 0);
+                    //Le pasamos nuestra señal al vector de datos del AudioClip que acabamos de crear, 
+                    // para que el AudioClip tenga la señal que generamos.
 
-        Re_AudioSourceHiHat.Play();
-        //Le decimos al Audio Source “El audio que vas a reproducir es este ClipHiHat que acabamos de generar”.
+                    Re_AudioSourceHiHat.clip = ClipHiHat;
+                    //Le decimos al Audio Source: “El audio que vas a reproducir es este ClipHiHat que acabamos de generar”.
 
+                    Re_AudioSourceHiHat.Play();
+                    //Le decimos al Audio Source “El audio que vas a reproducir es este ClipHiHat que acabamos de generar”.
+
+        #endregion //endregion 2.4.3CrearAudio yReproducir
+      
         #endregion // endregion de llenar señal
     }
 
     #endregion // endregion de GenerarHiHat
 
 
-    #region 2.4 Fu_GenerarBombo()
+    #region 2.4 Fu_GenerarBOMBO()
 
     void Fu_GenerarBombo()
     {
@@ -370,10 +384,10 @@ public class CodigoDelJuego : MonoBehaviour
             float Va_SenalSeno = Mathf.Sin(Va_Fase);
             #endregion // endregion de 2.4.1.Seno con f variable 
 
-            #region 2.4.2 EnvolventAmplitud
+            #region 2.4.2 EnvolvExponAmpli
             //inicia con alto volumen baja super rapido (exponencial) a cero (silencio)
             float Va_Envolvente = Mathf.Exp( -35f * Muestra / Co_FrecuenciaDeMuestreo );
-            #endregion //endregion 2.4.2 EnvolventAmplitud
+            #endregion //endregion 2.4.2 EnvolvExponAmpli
 
             #region 2.4.2 Señal Seno Como Golpe de ataque + envolvente de golpe 
             //inicia con alto volumen baja super rapido (exponencial) a cero (silencio)
@@ -387,22 +401,173 @@ public class CodigoDelJuego : MonoBehaviour
             Ar_Senal[Muestra] = (Va_SenalSeno * Va_Envolvente) + Va_SenalDelGolpe;
         }
 
-        // 6. Crear AudioClip
-        AudioClip ClipBombo = AudioClip.Create( "BomboProcedural", Co_NumeroDeMuestras, 1, Co_FrecuenciaDeMuestreo, false);
+        #region 2.4.3.CrearAudioReprodu
+            // 6. Crear AudioClip
+            AudioClip ClipBombo = AudioClip.Create( "BomboProcedural", Co_NumeroDeMuestras, 1, Co_FrecuenciaDeMuestreo, false);
+            // 1   número de canales de audio.   -  1 = mono. - 2 = estéreo.
+            //false              
+            //→ el clip NO se crea como un clip de streaming.
+            // es decir no se genera mientras se va reproduciendo, sino que se genera completo antes de reproducirse.
+            //Es decir, el bombo de 0.3 s tiene sus 13.230 muestras disponibles antes de reproducirse.
 
-        // 7. Pasar las muestras al AudioClip
-        ClipBombo.SetData(Ar_Senal, 0);
+            // 7. Pasar las muestras al AudioClip
+            ClipBombo.SetData(Ar_Senal, 0);
 
-        // 8. Asignar el clip al AudioSource del bombo
-        Re_AudioSourceBombo.clip = ClipBombo;
+            // 8. Asignar el clip al AudioSource del bombo
+            Re_AudioSourceBombo.clip = ClipBombo;
 
-        // 9. Reproducir
-        Re_AudioSourceBombo.Play();
+            // 9. Reproducir
+            Re_AudioSourceBombo.Play();
+        #endregion //endregion 2.4.3CrearAudio yReproducir
+
     }
 
     #endregion //endregion de GenerarBombo
 
+   
+    #region 2.5 Fu_GenerarCAJA()
+ 
+    // Las 5 componentes se mezclan para construir la Wavetable:
+    void Fu_GenerarCaja()
+    {
+        Debug.Log("SE GENERÓ CAJA");
+
+        int Co_TamanoDeWavetable = 1024; // Como sabemos muy bien que los computadores trabajan muy bien con potencias de 2 (128, 256, 512, 1024, 2048) 
+        // se decidió darle tamaño de 1024 para que su procesamiento sea fácil, el audio que generaremos con la Wavetable tendrá 1024 muestras. 
+        // Reutilizando esa Wavetable construiremos el audio completo que tendrá 44100 muestras/segundo × 0.3 segundos = 13230 muestras, aunque 
+        // se podría generar toda con Wavetable, al hacer asi, le quitamos peso al computador.
+
+        System.Random Ob_RandomMio = new System.Random();//Creamos el generador aleatorio antes del for.
+        //Creamos el arreglo que tendrá dentro la señal antes del for.
+
+        float[] Ar_Senal = new float[Co_NumeroDeMuestras];// Creamos el arreglo que tendrá dentro la señal.
+        float[] Ar_WavetableMixDe5Senos = new float[Co_TamanoDeWavetable]; // Arreglo que guardará la wavetable.
+        //se llena toda la "tabla" en el for, osea despues del for la wavetable de 1024 muestras
+        // ya esta llena y luego se reutiliza para generar la señal completa de 13230 muestras.
+        //--> Reutilizado, ciclico, por eso se genera con el numero de muestras de la Co_TamanoDeWavetable, para ahorrar procesamiento
+        float[] Ar_RuidoBlanco = new float[Co_NumeroDeMuestras]; // arreflo donde se guardaran tantos ruidos como posiciones tenga la 
+        //tabla o wavetable, //--> Sin reutilizar, único, ocurre una sola vez, por eso se genera con el total de muestras
+        // y no con el solo tamaño de la wavetable
+        //--> Reutilizado, ciclico, por eso se genera con el numero de muestras de la Co_TamanoDeWavetable, para ahorrar procesamiento
+        float[] Ar_Envolvente = new float[Co_NumeroDeMuestras];//--> Sin reutilizar, único, ocurre una sola vez, por eso se genera con el total de muestras
+        // y no con el solo tamaño de la wavetable
+        float[] Ar_Ataque = new float[Co_NumeroDeMuestras];  //--> Sin reutilizar, único, ocurre una sola vez, por eso se genera con el total de muestras
+        // y no con el solo tamaño de la wavetable
+       
+        int Va_IndiceWavetable = 0; //muestra 0 → posición 0 de la Wavetable
+        //muestra 1 → posición 1...
+        // muestra 1023 → posición 1023 de la wavetable
+        // muestra 1024 → vuelve a posición 0 de la wavetable
+        // muestra 1025 → posición 1
+        // etc.
+        // Así la Wavetable se reutiliza para llenar los 0.3 segundos que es la duracion de todo el audio.
+
+        // For para construir las 1024 muestras de la  Ar_WAVETABLE MIX DE 5SENOS 
+        // Como esta caracteristica del sonido en la caja, es repetitivo  se genera con solo 1024 muestras,
+        // que mas adelante se reutilizaran para llenar ciclicamente las 13230 muestras en total
+        for (int Muestra = 0; Muestra < Co_TamanoDeWavetable; Muestra++)
+        {
+            #region 2.5.1 Wavetable5Senos                 
+                // 1. Generamos para cada muestras sus 5 componentes sinusoidales
+                float Va_SenalSeno1 = Mathf.Sin(2f * Mathf.PI * 120f * Muestra / Co_FrecuenciaDeMuestreo); //120 es mas grave que 180
+                float Va_SenalSeno2 = Mathf.Sin(2f * Mathf.PI * 240f * Muestra / Co_FrecuenciaDeMuestreo); //240 es mas grave que 360
+                float Va_SenalSeno3 = Mathf.Sin(2f * Mathf.PI * 2000f * Muestra / Co_FrecuenciaDeMuestreo);
+                float Va_SenalSeno4 = Mathf.Sin(2f * Mathf.PI * 5000f * Muestra / Co_FrecuenciaDeMuestreo);
+                float Va_SenalSeno5 = Mathf.Sin(2f * Mathf.PI * 10000f * Muestra / Co_FrecuenciaDeMuestreo);
+
+                // 2. Mezcla de las 5 componentes para construir la Wavetable , cada una con estos porcentajes o pesos.
+                Ar_WavetableMixDe5Senos[Muestra]=(Va_SenalSeno1*0.50f)+(Va_SenalSeno2*0.50f)+(Va_SenalSeno3*0.01f)+(Va_SenalSeno4*0.01f)+(Va_SenalSeno5*0.01f);
+            #endregion // endregion de 2.5.1 Wavetable5Senos        
+        }
+
+
+        // For para construir 13230 muestras del RUIDO BLANCO 
+        // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
+        // Para que sea único sin ser ciclico.
+        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+        {
+            #region 2.5.2 RuidoBlanco  
+                // 3.  Generamos el ruido blanco dentro del for para que en cada muestra el ruido sea diferente 
+                Ar_RuidoBlanco[Muestra] = (float)( Ob_RandomMio.NextDouble() * 2.0 - 1.0);
+                //en cada ciclo del for para cada una de las 1024 muestras de la wavetable.                
+            #endregion // endregion 2.5.2 RuidoBlanco       
+        }
+
+
+        // For para construir 13230 muestras del ATAQUE 
+        // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
+        // Para que sea único sin ser ciclico.
+        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+        {
+            float Va_SenalAtaque = Mathf.Sin(2f * Mathf.PI * 2000f * Muestra / Co_FrecuenciaDeMuestreo );  
+            //2000f frecuencia del ataque, agudo          
+            float Va_EnvolventeAtaque = Mathf.Exp(-240f * Muestra / Co_FrecuenciaDeMuestreo);
+            //60f → ataque largo, 120f → ataque corto, 180f → ataque mas corto, (duración)
+            Ar_Ataque[Muestra] = Va_SenalAtaque * Va_EnvolventeAtaque;
+        }
+
+
+        // For para construir 13230 muestras de la envolvente exponencial de amplitud
+        // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
+        // Para que sea único sin ser ciclico.
+        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+        {
+            Ar_Envolvente[Muestra] = Mathf.Exp(-8f * Muestra / Co_FrecuenciaDeMuestreo);
+        }
+
+
+        //Reutilizamos los 1024 senos (wavetable basica)  --> Reutilizada ciclicamente 
+        //               + 1024 ruidos                    ---> Sin reutilizar, único, ocurre una sola vez.  
+        //               + 13230 muestras de envolventes  --> Sin reutilizar, único, ocurre una sola vez. 
+        //               + 13230 muestras de ataque       --> Sin reutilizar, único, ocurre una sola vez.
+        //                 para llenar las 13230 muestras de la señal completa de 0.3 segundos.
+        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+        {
+            Va_IndiceWavetable = Muestra % Co_TamanoDeWavetable;
+            //Ar_Senal[Muestra] = Ar_Wavetable5Senos[Va_IndiceWavetable];// si queremos escuchar solo las 13.200 muestras del mix de los 5 senos
+            //Ar_Senal[Muestra] = Ar_Wavetable5Senos[Va_IndiceWavetable]*0.60f + Ar_RuidoBlanco[Va_IndiceWavetable]*0.40f; // si queremos 
+            //escuchar los 13.200 mix de senos + 13.200 ruidos 
+            //Ar_Senal[Muestra] = (
+                                    //(
+                                        //  Ar_WavetableMixDe5Senos[Va_IndiceWavetable]*0.60f  //reutlizando 1024 muestrs - ciclico
+                                        //+ Ar_RuidoBlanco[Va_IndiceWavetable]*0.40f      //SIN reutlizar, no se usan 1024 muestras sino las 13200 - único
+                                        //+ Ar_Ataque[Muestra]*0.20f                      //SIN reutlizar, no se usan 1024 muestras sino las 13200 - único
+                                    //)
+                                //); // si queremos escuchar los 13.200 mix de senos + 13.200 ruidos + ataque
+            Ar_Senal[Muestra] = (
+                        (
+                                Ar_WavetableMixDe5Senos[Va_IndiceWavetable]*0.60f  //reutlizando 1024 muestras - ciclico
+                            + Ar_RuidoBlanco[Va_IndiceWavetable]*0.20f      //SIN reutlizar, no se usan 1024 muestras sino las 13200 - único
+                            + Ar_Ataque[Muestra]*0.20f                      //SIN reutlizar, no se usan 1024 muestras sino las 13200 - único
+                        )
+                        * Ar_Envolvente[Muestra]                            //SIN reutlizar, no se usan 1024 muestras sino las 13200 - único
+                    ); // si queremos escuchar los 13.200 mix de senos + 13.200 ruidos + ataque + envolvente exponencial de amplitud
+
+        } 
+
+        #region 2.5.4.CrearAudioReprodu
+
+            // 6. Crear AudioClip
+            AudioClip ClipCaja = AudioClip.Create( "CajaProcedural", Co_NumeroDeMuestras, 1, Co_FrecuenciaDeMuestreo, false);
+            // 1   número de canales de audio.   -  1 = mono. - 2 = estéreo.
+            //false              
+            //→ el clip NO se crea como un clip de streaming.
+            // es decir no se genera mientras se va reproduciendo, sino que se genera completo antes de reproducirse.
+            //Es decir, la Caja de 0.3 s tiene sus 13.230 muestras disponibles antes de reproducirse.
+
+            // 7. Pasar las muestras al AudioClip
+            ClipCaja.SetData(Ar_Senal, 0);
+
+            // 8. Asignar el clip al AudioSource de la caja
+            Re_AudioSourceCaja.clip = ClipCaja;
+
+            // 9. Reproducir
+            Re_AudioSourceCaja.Play();
+        #endregion //endregion 2.5.4.CrearAudioReprodu
+    }
+
+    #endregion // endregion de Fu_GenerarCaja()
+
 #endregion // endregion de metodos
 
 }
-
