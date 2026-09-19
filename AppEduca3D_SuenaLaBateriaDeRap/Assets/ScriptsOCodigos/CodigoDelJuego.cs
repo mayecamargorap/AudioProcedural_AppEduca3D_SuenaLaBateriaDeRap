@@ -77,12 +77,12 @@ public class CodigoDelJuego : MonoBehaviour
     [Header("Variables del Bajo 808")]
     public AudioSource Re_AudioSourceBajo808;
 
-    public float Va_FrecuenciaInicial808 = 90f;
-    public float Va_FrecuenciaFinal808 = 45f;
-    public float Va_VelocidadDeCaida808 = 18f;
+    public float Va_FrecuenciaInicial808 = 70f;
+    public float Va_FrecuenciaFinal808 = 38f;
+    public float Va_VelocidadDeCaida808 = 14f;
 
-    public float Va_VelocidadDeCaidaAmplitud808 = 5f;
-    public float Va_GananciaBajo808 = 1.2f;
+    public float Va_VelocidadDeCaidaAmplitud808 = 4f;
+    public float Va_GananciaBajo808 = 1.3f;
 #endregion
 
 #region 2 Metodos
@@ -567,6 +567,199 @@ public class CodigoDelJuego : MonoBehaviour
     }
 
     #endregion // endregion de Fu_GenerarCaja()
+
+
+    #region 2.5 Fu_GenerarBAJO808()
+
+        void Fu_GenerarBajo808()
+        {
+            Debug.Log("SE GENERÓ BAJO 808");
+
+            // ---------------------------------------------------------
+            // 1. DATOS GENERALES DEL AUDIO
+            // ---------------------------------------------------------
+
+            int Co_TamanoDeWavetable808 = 1024;
+
+            int Co_NumeroDeMuestras808 =
+                Mathf.RoundToInt(Co_FrecuenciaDeMuestreo * 0.8f);
+
+            float[] Ar_Senal808 = new float[Co_NumeroDeMuestras808];
+
+            float[] Ar_Wavetable808 =
+                new float[Co_TamanoDeWavetable808];
+
+
+            // ---------------------------------------------------------
+            // 2. CONSTRUIR WAVETABLE DEL BAJO
+            // ---------------------------------------------------------
+            // Se construye una onda principalmente senoidal.
+            // Se agregan armónicos muy pequeños para darle más cuerpo.
+
+            for (int Muestra = 0;
+                Muestra < Co_TamanoDeWavetable808;
+                Muestra++)
+            {
+                float Va_FaseWavetable =
+                    2f * Mathf.PI * Muestra / Co_TamanoDeWavetable808;
+
+                float Va_SenoFundamental =
+                    Mathf.Sin(Va_FaseWavetable);
+
+                float Va_SegundoArmonico =
+                    Mathf.Sin(Va_FaseWavetable * 2f);
+
+                float Va_TercerArmonico =
+                    Mathf.Sin(Va_FaseWavetable * 3f);
+
+                Ar_Wavetable808[Muestra] =
+                    (Va_SenoFundamental * 0.97f)
+                    + (Va_SegundoArmonico * 0.025f)
+                    + (Va_TercerArmonico * 0.005f);
+            }
+
+
+            // ---------------------------------------------------------
+            // 3. GENERAR EL BAJO COMPLETO REUTILIZANDO LA WAVETABLE
+            // ---------------------------------------------------------
+
+            float Va_Fase = 0f;
+
+            for (int Muestra = 0;
+                Muestra < Co_NumeroDeMuestras808;
+                Muestra++)
+            {
+                // Tiempo actual
+                float Va_Tiempo =
+                    (float)Muestra / Co_FrecuenciaDeMuestreo;
+
+
+                // -----------------------------------------------------
+                // 3.1 PITCH DROP DEL 808
+                // -----------------------------------------------------
+
+                float Va_Frecuencia =
+                    Va_FrecuenciaFinal808
+                    + (Va_FrecuenciaInicial808 - Va_FrecuenciaFinal808)
+                    * Mathf.Exp(-Va_VelocidadDeCaida808 * Va_Tiempo);
+
+
+                // -----------------------------------------------------
+                // 3.2 AVANZAR EN LA WAVETABLE
+                // -----------------------------------------------------
+
+                Va_Fase +=
+                    Va_Frecuencia
+                    * Co_TamanoDeWavetable808
+                    / Co_FrecuenciaDeMuestreo;
+
+
+                // Cuando llega al final, vuelve al principio
+                if (Va_Fase >= Co_TamanoDeWavetable808)
+                {
+                    Va_Fase -= Co_TamanoDeWavetable808;
+                }
+
+
+int Va_IndiceWavetable =
+    Mathf.FloorToInt(Va_Fase);
+
+int Va_IndiceSiguiente =
+    (Va_IndiceWavetable + 1) % Co_TamanoDeWavetable808;
+
+float Va_Fraccion =
+    Va_Fase - Va_IndiceWavetable;
+
+float Va_Senal808 =
+    Mathf.Lerp(
+        Ar_Wavetable808[Va_IndiceWavetable],
+        Ar_Wavetable808[Va_IndiceSiguiente],
+        Va_Fraccion
+    );
+
+
+                // -----------------------------------------------------
+                // 3.3 ENVOLVENTE DE AMPLITUD
+                // -----------------------------------------------------
+
+                float Va_Envolvente =
+                    Mathf.Exp(
+                        -Va_VelocidadDeCaidaAmplitud808
+                        * Va_Tiempo
+                    );
+
+
+                // -----------------------------------------------------
+                // 3.4 CONSTRUIR LA MUESTRA FINAL
+                // -----------------------------------------------------
+
+                Ar_Senal808[Muestra] =
+                    Va_Senal808
+                    * Va_Envolvente
+                    * Va_GananciaBajo808;
+            }
+
+
+            // ---------------------------------------------------------
+            // 4. FADE FINAL
+            // ---------------------------------------------------------
+            // Evita terminar exactamente en un valor diferente de cero.
+
+            int Co_MuestrasFade808 = 1000;
+
+            for (int Muestra = 0;
+                Muestra < Co_MuestrasFade808;
+                Muestra++)
+            {
+                int Va_Indice =
+                    Co_NumeroDeMuestras808
+                    - Co_MuestrasFade808
+                    + Muestra;
+
+                float Va_FadeFinal =
+                    1f - (float)Muestra / Co_MuestrasFade808;
+
+                Ar_Senal808[Va_Indice] *= Va_FadeFinal;
+            }
+
+
+            // ---------------------------------------------------------
+            // 5. CREAR AUDIOCLIP
+            // ---------------------------------------------------------
+
+            AudioClip ClipBajo808 = AudioClip.Create(
+                "Bajo808Procedural",
+                Co_NumeroDeMuestras808,
+                1,
+                Co_FrecuenciaDeMuestreo,
+                false
+            );
+
+
+            // ---------------------------------------------------------
+            // 6. PASAR LAS MUESTRAS AL AUDIOCLIP
+            // ---------------------------------------------------------
+
+            ClipBajo808.SetData(Ar_Senal808, 0);
+
+
+            // ---------------------------------------------------------
+            // 7. ASIGNAR EL CLIP AL AUDIOSOURCE
+            // ---------------------------------------------------------
+
+            Re_AudioSourceBajo808.clip = ClipBajo808;
+
+
+            // ---------------------------------------------------------
+            // 8. REPRODUCIR
+            // ---------------------------------------------------------
+
+            Re_AudioSourceBajo808.Play();
+        }
+
+    #endregion // endregion de Fu_GenerarBAJO808()
+
+
 
 #endregion // endregion de metodos
 
