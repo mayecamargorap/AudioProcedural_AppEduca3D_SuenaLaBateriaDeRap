@@ -83,6 +83,15 @@ public class CodigoDelJuego : MonoBehaviour
 
     public float Va_VelocidadDeCaidaAmplitud808 = 4f;
     public float Va_GananciaBajo808 = 1.3f;
+
+    // ------------------------------------------ Variables del Sampling ------------------------------------------
+    [Header("Variables del Sampling")]
+    public AudioSource Re_AudioSourceChasquido;
+    public AudioSource Re_AudioSourceAplauso;
+
+    public AudioClip Re_Chasquido;
+    public AudioClip Re_Aplauso;
+
 #endregion
 
 #region 2 Metodos
@@ -130,6 +139,17 @@ public class CodigoDelJuego : MonoBehaviour
         {
             Fu_GenerarBajo808();
         }
+        // Si la tecla L esta presionada, reproduce el chasquido sampleado
+if (Input.GetKeyDown(KeyCode.L))
+{
+    Fu_GenerarChasquido();
+}
+
+// Si la tecla Ñ esta presionada, reproduce el aplauso sampleado
+if (Input.GetKeyDown(KeyCode.Semicolon))
+{
+    Fu_GenerarAplauso();
+}
 
     }
     #endregion // endregion de Update
@@ -758,6 +778,267 @@ float Va_Senal808 =
         }
 
     #endregion // endregion de Fu_GenerarBAJO808()
+
+
+#region 2.6 Fu_GenerarCHASQUIDO()
+
+void Fu_GenerarChasquido()
+{
+    Debug.Log("SE GENERÓ CHASQUIDO POR SAMPLING");
+
+    int Co_MuestrasOriginales = Re_Chasquido.samples;
+
+    float[] Ar_MuestrasOriginales =
+        new float[Co_MuestrasOriginales];
+
+    Re_Chasquido.GetData(Ar_MuestrasOriginales, 0);
+
+    int Co_TotalRepeticiones = 3;
+
+    int Co_Desplazamiento =
+        Mathf.RoundToInt(Co_MuestrasOriginales * 0.30f);
+
+    int Co_NumeroDeMuestras =
+        Co_Desplazamiento * (Co_TotalRepeticiones - 1)
+        + Co_MuestrasOriginales;
+
+    float[] Ar_SenalSampleada =
+        new float[Co_NumeroDeMuestras];
+
+    for (int Repeticion = 0;
+         Repeticion < Co_TotalRepeticiones;
+         Repeticion++)
+    {
+        int Va_PosicionInicial =
+            Repeticion * Co_Desplazamiento;
+
+        for (int Muestra = 0;
+             Muestra < Co_MuestrasOriginales;
+             Muestra++)
+        {
+            int Va_MuestraInvertida =
+                Co_MuestrasOriginales - 1 - Muestra;
+
+            Ar_SenalSampleada[
+                Va_PosicionInicial + Muestra
+            ] += Ar_MuestrasOriginales[
+                Va_MuestraInvertida
+            ];
+        }
+    }
+
+    for (int Muestra = 0;
+         Muestra < Co_NumeroDeMuestras;
+         Muestra++)
+    {
+        Ar_SenalSampleada[Muestra] *= 0.35f;
+    }
+
+    AudioClip ClipChasquidoSampleado =
+        AudioClip.Create(
+            "ChasquidoSampleado",
+            Co_NumeroDeMuestras,
+            Re_Chasquido.channels,
+            Re_Chasquido.frequency,
+            false
+        );
+
+    ClipChasquidoSampleado.SetData(
+        Ar_SenalSampleada,
+        0
+    );
+
+    Re_AudioSourceChasquido.clip =
+        ClipChasquidoSampleado;
+
+    Re_AudioSourceChasquido.Play();
+}
+
+#endregion
+
+
+
+#region 2.7 Fu_GenerarAPLAUSO()
+
+void Fu_GenerarAplauso()
+{
+    Debug.Log("SE GENERÓ APLAUSO POR SAMPLING");
+
+    int Co_MuestrasOriginales = Re_Aplauso.samples;
+
+    float[] Ar_MuestrasOriginales =
+        new float[Co_MuestrasOriginales];
+
+    Re_Aplauso.GetData(Ar_MuestrasOriginales, 0);
+
+    int Co_TotalRepeticiones = 6;
+
+    float[] Ar_Velocidades =
+    {
+        0.96f,
+        1.05f,
+        0.90f,
+        1.08f,
+        0.93f,
+        1.02f
+    };
+
+    float[] Ar_Volumenes =
+    {
+        0.25f,
+        0.35f,
+        0.45f,
+        0.30f,
+        0.40f,
+        0.28f
+    };
+
+    float[] Ar_Desplazamientos =
+    {
+        0.00f,
+        0.14f,
+        0.28f,
+        0.42f,
+        0.56f,
+        0.70f
+    };
+
+    int[] Ar_MuestrasDeCopia =
+        new int[Co_TotalRepeticiones];
+
+    int Co_NumeroDeMuestras = 0;
+
+    for (int Repeticion = 0;
+         Repeticion < Co_TotalRepeticiones;
+         Repeticion++)
+    {
+        Ar_MuestrasDeCopia[Repeticion] =
+            Mathf.RoundToInt(
+                Co_MuestrasOriginales /
+                Ar_Velocidades[Repeticion]
+            );
+
+        int Va_PosicionFinal =
+            Mathf.RoundToInt(
+                Co_MuestrasOriginales *
+                Ar_Desplazamientos[Repeticion]
+            )
+            + Ar_MuestrasDeCopia[Repeticion];
+
+        if (Va_PosicionFinal > Co_NumeroDeMuestras)
+        {
+            Co_NumeroDeMuestras =
+                Va_PosicionFinal;
+        }
+    }
+
+    float[] Ar_SenalSampleada =
+        new float[Co_NumeroDeMuestras];
+
+    for (int Repeticion = 0;
+         Repeticion < Co_TotalRepeticiones;
+         Repeticion++)
+    {
+        int Va_PosicionInicial =
+            Mathf.RoundToInt(
+                Co_MuestrasOriginales *
+                Ar_Desplazamientos[Repeticion]
+            );
+
+        int Va_MuestrasDeCopia =
+            Ar_MuestrasDeCopia[Repeticion];
+
+        float Va_Volumen =
+            Ar_Volumenes[Repeticion];
+
+        float Va_Velocidad =
+            Ar_Velocidades[Repeticion];
+
+        for (int Muestra = 0;
+             Muestra < Va_MuestrasDeCopia;
+             Muestra++)
+        {
+            float Va_IndiceFuente =
+                Muestra * Va_Velocidad;
+
+            float Va_IndiceInvertido =
+                Co_MuestrasOriginales - 1
+                - Va_IndiceFuente;
+
+            if (Va_IndiceInvertido <= 0f)
+            {
+                break;
+            }
+
+            int Va_IndiceInferior =
+                Mathf.FloorToInt(
+                    Va_IndiceInvertido
+                );
+
+            int Va_IndiceSuperior =
+                Va_IndiceInferior + 1;
+
+            if (Va_IndiceSuperior >=
+                Co_MuestrasOriginales)
+            {
+                Va_IndiceSuperior =
+                    Co_MuestrasOriginales - 1;
+            }
+
+            float Va_Fraccion =
+                Va_IndiceInvertido -
+                Va_IndiceInferior;
+
+            float Va_Muestra =
+                Mathf.Lerp(
+                    Ar_MuestrasOriginales[
+                        Va_IndiceInferior
+                    ],
+                    Ar_MuestrasOriginales[
+                        Va_IndiceSuperior
+                    ],
+                    Va_Fraccion
+                );
+
+            Va_Muestra *= Va_Volumen;
+
+            Ar_SenalSampleada[
+                Va_PosicionInicial + Muestra
+            ] += Va_Muestra;
+        }
+    }
+
+    float Va_GananciaFinal = 0.45f;
+
+    for (int Muestra = 0;
+         Muestra < Co_NumeroDeMuestras;
+         Muestra++)
+    {
+        Ar_SenalSampleada[Muestra] *=
+            Va_GananciaFinal;
+    }
+
+    AudioClip ClipAplausoSampleado =
+        AudioClip.Create(
+            "AplausoSampleado",
+            Co_NumeroDeMuestras,
+            Re_Aplauso.channels,
+            Re_Aplauso.frequency,
+            false
+        );
+
+    ClipAplausoSampleado.SetData(
+        Ar_SenalSampleada,
+        0
+    );
+
+    Re_AudioSourceAplauso.clip =
+        ClipAplausoSampleado;
+
+    Re_AudioSourceAplauso.Play();
+}
+
+#endregion
 
 
 
