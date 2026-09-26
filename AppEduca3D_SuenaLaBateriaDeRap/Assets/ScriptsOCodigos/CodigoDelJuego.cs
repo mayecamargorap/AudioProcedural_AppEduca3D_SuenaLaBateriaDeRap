@@ -65,6 +65,7 @@ public class CodigoDelJuego : MonoBehaviour
     public float Va_FrecuenciaDelGolpe = 2000f;
     public float Va_NivelDelGolpe = 0.25f;
     public float Va_VelocidadDeCaidaDelGolpe = 150f;
+    public float Va_Fase = 0f;
     //public float Va_NivelDeRuidoDeGolpe = 0.500f; // el ruido tendrá poca intensidad, solo 15% de la señal 
     //public float Va_VelocidadDeCaidaDelGolpe = 150f; //hace que el ruido desaparezca rápidamente.
 
@@ -77,12 +78,17 @@ public class CodigoDelJuego : MonoBehaviour
     [Header("Variables del Bajo 808")]
     public AudioSource Re_AudioSourceBajo808;
 
+    public int Co_TamanoDeWavetable808 = 1024;
+
+    public int Co_NumeroDeMuestras808 = Mathf.RoundToInt(Co_FrecuenciaDeMuestreo * 0.8f);
+
     public float Va_FrecuenciaInicial808 = 70f;
     public float Va_FrecuenciaFinal808 = 38f;
     public float Va_VelocidadDeCaida808 = 14f;
 
     public float Va_VelocidadDeCaidaAmplitud808 = 4f;
     public float Va_GananciaBajo808 = 1.3f;
+    public int Co_MuestrasFade808 = 1000;
 
     // ------------------------------------------ Variables del Sampling ------------------------------------------
     [Header("Variables del Sampling")]
@@ -124,21 +130,25 @@ public class CodigoDelJuego : MonoBehaviour
         {
            Fu_GenerarHiHat();
         }
+
         // Si la tecla H esta presionada, reproduzca sonido de Bombo   
         if (Input.GetKeyDown(KeyCode.H))
         {
            Fu_GenerarBombo();
         }
+
         // Si la tecla J esta presionada, reproduzca sonido de la caja   
         if (Input.GetKeyDown(KeyCode.J))
         {
            Fu_GenerarCaja();
         }
+
         // Si la tecla K esta presionada, reproduzca sonido del bajo 808
         if (Input.GetKeyDown(KeyCode.K))
         {
             Fu_GenerarBajo808();
         }
+
         // Si la tecla L esta presionada, reproduce el chasquido sampleado
 if (Input.GetKeyDown(KeyCode.L))
 {
@@ -153,6 +163,8 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
 
     }
     #endregion // endregion de Update
+
+
 
     #region 2.3 Fu_GenerarHIHAT()
     void Fu_GenerarHiHat()
@@ -213,7 +225,7 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
             #region 2.3.2.1.Ruido
             // En nuestro caso: 
             // seria un numero Random entre -1 y 1 Por ejemplo en cada ciclo for generaria uno de estos valores:
-            float VaRuido = (float)(Ob_RandomMio.NextDouble() * 2.0 - 1.0);
+            float Va_RuidoEnLaMuestraActual = (float)(Ob_RandomMio.NextDouble() * 2.0 - 1.0);
             // VaRuido [1]     = -1
              //...
             // VaRuido[2000]  = -0.7
@@ -255,7 +267,7 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
             #region 2.3.2.4 Ruido +Senos 
             // Mezcla de ruido + componentes metálicas
             float Va_RuidoMasSenosActual = 
-                (VaRuido * 0.6f) + // el ruido será el 60% de la señal
+                (Va_RuidoEnLaMuestraActual * 0.6f) + // el ruido será el 60% de la señal
                 (Va_SenalSeno1 * 0.15f)+          // el primer seno será el 15% de la señal
                 (Va_SenalSeno2 * 0.15f) +         // el segundo seno será el 15% de la señal
                 (Va_SenalSeno3 * 0.10f);          // el tercer seno será el 10% de la señal
@@ -409,7 +421,7 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
         //System.Random Ob_RandomMio = new System.Random(); //para generar el ruido del golpe aleatorio 
         
         // 3. Recorrer todas las muestras
-        float Va_Fase = 0f;
+        
         for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
         {
             #region 2.4.1Seno con pitch drop   
@@ -425,7 +437,7 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
             float Va_Envolvente = Mathf.Exp( -35f * Muestra / Co_FrecuenciaDeMuestreo );
             #endregion //endregion 2.4.2 EnvolvExponAmpli
 
-            #region 2.4.2 Señal Seno Como Golpe de ataque + envolvente de golpe 
+            #region 2.4.2 Seno Como Golpe de ataque + envolvente de golpe 
             //inicia con alto volumen baja super rapido (exponencial) a cero (silencio)
             float Va_SenalDelGolpe = Mathf.Sin( 2f * Mathf.PI * Va_FrecuenciaDelGolpe * Va_Tiempo );
             float Va_EnvolventeDelGolpe = Mathf.Exp( -Va_VelocidadDeCaidaDelGolpe * Va_Tiempo);
@@ -460,6 +472,8 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
 
     #endregion //endregion de GenerarBombo
 
+
+
    
     #region 2.5 Fu_GenerarCAJA()
  
@@ -485,88 +499,97 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
         float[] Ar_Ataque = new float[Co_NumeroDeMuestras];  //--> Sin reutilizar, único, ocurre una sola vez, por eso se genera con el total de muestras
         // y no con el solo tamaño de la wavetable
    
-        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
-        {
-            #region 2.5.1 Wavetable5Senos                 
-                // 1. Generamos para cada muestras sus 5 componentes sinusoidales
-                //120 es mas grave que 180
-                float Va_SenalSeno1 = Mathf.Sin(2f * Mathf.PI * 140f * Muestra / Co_FrecuenciaDeMuestreo); //Cuerpo grave
-                float Va_SenalSeno2 = Mathf.Sin(2f * Mathf.PI * 220f * Muestra / Co_FrecuenciaDeMuestreo); //Resonancia 
-                float Va_SenalSeno3 = Mathf.Sin(2f * Mathf.PI * 900f * Muestra / Co_FrecuenciaDeMuestreo); //Claridad al sonido
-                float Va_SenalSeno4 = Mathf.Sin(2f * Mathf.PI * 1800f * Muestra / Co_FrecuenciaDeMuestreo); //Brillo
-                float Va_SenalSeno5 = Mathf.Sin(2f * Mathf.PI * 3200f * Muestra / Co_FrecuenciaDeMuestreo); //Brillo fino o agudo
-
-                // 2. Mezcla de las 5 componentes para construir la Wavetable , cada una con estos porcentajes o pesos.
-                Ar_WavetableMixDe5Senos[Muestra]=(Va_SenalSeno1*0.40f)+
-                                                 (Va_SenalSeno2*0.30f)+
-                                                 (Va_SenalSeno3*0.15f)+
-                                                 (Va_SenalSeno4*0.10f)+
-                                                 (Va_SenalSeno5*0.05f);
-
-                Ar_EnvolventeCuerpo[Muestra] =     Mathf.Exp(-12f * Muestra / Co_FrecuenciaDeMuestreo);
-            #endregion // endregion de 2.5.1 Wavetable5Senos        
-        }
-
-
-        // For para construir 13230 muestras del RUIDO BLANCO 
-        // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
-        // Para que sea único sin ser ciclico.
-        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
-        {
-            #region 2.5.2 RuidoBlanco  
-                // 3.  Generamos el ruido blanco dentro del for para que en cada muestra el ruido sea diferente 
-                Ar_RuidoBlanco[Muestra] = (float)( Ob_RandomMio.NextDouble() * 2.0 - 1.0);
-                //en cada ciclo del for para cada una de las 1024 muestras de la wavetable.          
-                
-                Ar_EnvolventeRuido[Muestra] =    Mathf.Exp(-10f * Muestra / Co_FrecuenciaDeMuestreo);      
-                Ar_RuidoSuavizado[Muestra] = Ar_RuidoSuavizado[Muestra] * 0.90f + Ar_RuidoBlanco[Muestra] * 0.10f;
-            #endregion // endregion 2.5.2 RuidoBlanco       
-        }
-
-
-        // For para construir 13230 muestras del ATAQUE 
-        // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
-        // Para que sea único sin ser ciclico.
-        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
-        {
-            float Va_SenalAtaque = Mathf.Sin(2f * Mathf.PI * 2000f * Muestra / Co_FrecuenciaDeMuestreo );  
-            //2000f frecuencia del ataque, agudo          
-            float Va_EnvolventeAtaque = Mathf.Exp(-240f * Muestra / Co_FrecuenciaDeMuestreo);
-            //60f → ataque largo, 120f → ataque corto, 180f → ataque mas corto, (duración)
-            Ar_Ataque[Muestra] = Va_SenalAtaque * Va_EnvolventeAtaque;
-        }
-
-
-        // For para construir 13230 muestras de la envolvente exponencial de amplitud
-        // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
-        // Para que sea único sin ser ciclico.
-        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
-        {
-            Ar_Envolvente[Muestra] =    Mathf.Exp(-36f * Muestra / Co_FrecuenciaDeMuestreo);
-        }
-
-
-        //Reutilizamos los 13230 muestras de senos (wavetable basica)  --> Sin reutilizar, único, ocurre una sola vez.  
-        //               + 13230 muestras de ruidos       ---> Sin reutilizar, único, ocurre una sola vez.  
-        //               + 13230 muestras de envolventes  --> Sin reutilizar, único, ocurre una sola vez. 
-        //               + 13230 muestras de ataque       --> Sin reutilizar, único, ocurre una sola vez.
-        //                 para llenar las 13230 muestras de la señal completa de 0.3 segundos.
-        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
-        {
-            Ar_Senal[Muestra] = (
-                    Ar_WavetableMixDe5Senos[Muestra] * Ar_EnvolventeCuerpo[Muestra] * 0.08f
-                    + Ar_RuidoSuavizado[Muestra] * Ar_EnvolventeRuido[Muestra] * 0.82f
-                    + Ar_Ataque[Muestra] * 0.10f
-                )
-                * Ar_Envolvente[Muestra];
-
-            if (Muestra > Co_NumeroDeMuestras - 220)
+        #region 2.5.1 Wavetable5Senos
+            for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
             {
-                float Va_FadeFinal =(Co_NumeroDeMuestras - Muestra) / 220f;
-                Ar_Senal[Muestra] *= Va_FadeFinal;
-                Ar_Senal[Muestra] *= 1.5f;                
+                                
+                    // 1. Generamos para cada muestras sus 5 componentes sinusoidales
+                    //120 es mas grave que 180
+                    float Va_SenalSeno1 = Mathf.Sin(2f * Mathf.PI * 140f * Muestra / Co_FrecuenciaDeMuestreo); //Cuerpo grave
+                    float Va_SenalSeno2 = Mathf.Sin(2f * Mathf.PI * 220f * Muestra / Co_FrecuenciaDeMuestreo); //Resonancia 
+                    float Va_SenalSeno3 = Mathf.Sin(2f * Mathf.PI * 900f * Muestra / Co_FrecuenciaDeMuestreo); //Claridad al sonido
+                    float Va_SenalSeno4 = Mathf.Sin(2f * Mathf.PI * 1800f * Muestra / Co_FrecuenciaDeMuestreo); //Brillo
+                    float Va_SenalSeno5 = Mathf.Sin(2f * Mathf.PI * 3200f * Muestra / Co_FrecuenciaDeMuestreo); //Brillo fino o agudo
+
+                    // 2. Mezcla de las 5 componentes para construir la Wavetable , cada una con estos porcentajes o pesos.
+                    Ar_WavetableMixDe5Senos[Muestra]=(Va_SenalSeno1*0.40f)+
+                                                    (Va_SenalSeno2*0.30f)+
+                                                    (Va_SenalSeno3*0.15f)+
+                                                    (Va_SenalSeno4*0.10f)+
+                                                    (Va_SenalSeno5*0.05f);
+
+                    Ar_EnvolventeCuerpo[Muestra] =     Mathf.Exp(-12f * Muestra / Co_FrecuenciaDeMuestreo);
             }
-        } 
+        #endregion // endregion de 2.5.1 Wavetable5Senos  
+
+
+        #region 2.5.2 RuidoBlanco  
+            // For para construir 13230 muestras del RUIDO BLANCO 
+            // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
+            // Para que sea único sin ser ciclico.
+            for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+            {
+                    // 3.  Generamos el ruido blanco dentro del for para que en cada muestra el ruido sea diferente 
+                    Ar_RuidoBlanco[Muestra] = (float)( Ob_RandomMio.NextDouble() * 2.0 - 1.0);
+                    //en cada ciclo del for para cada una de las 1024 muestras de la wavetable.          
+                    
+                    Ar_EnvolventeRuido[Muestra] =    Mathf.Exp(-10f * Muestra / Co_FrecuenciaDeMuestreo);      
+                    Ar_RuidoSuavizado[Muestra] = Ar_RuidoSuavizado[Muestra] * 0.90f + Ar_RuidoBlanco[Muestra] * 0.10f;
+                
+            }
+        #endregion // endregion 2.5.2 RuidoBlanco      
+
+
+        #region 2.5.3 Ataque+EnvAtaq  
+            // For para construir 13230 muestras del ATAQUE 
+            // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
+            // Para que sea único sin ser ciclico.
+            for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+            {
+                float Va_SenalAtaque = Mathf.Sin(2f * Mathf.PI * 2000f * Muestra / Co_FrecuenciaDeMuestreo );  
+                //2000f frecuencia del ataque, agudo          
+                float Va_EnvolventeAtaque = Mathf.Exp(-240f * Muestra / Co_FrecuenciaDeMuestreo);
+                //60f → ataque largo, 120f → ataque corto, 180f → ataque mas corto, (duración)
+                Ar_Ataque[Muestra] = Va_SenalAtaque * Va_EnvolventeAtaque;
+            }
+         #endregion // endregion 2.5.3 Ataque+EnvAtaq  
+
+
+        #region 2.5.4 Envolv Global      
+            // For para construir 13230 muestras de la envolvente exponencial de amplitud
+            // Como esta caracteristica del sonido en la caja, NO es repetitivo se generan las 13200 muestras en total
+            // Para que sea único sin ser ciclico.
+            for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+            {
+                Ar_Envolvente[Muestra] =    Mathf.Exp(-36f * Muestra / Co_FrecuenciaDeMuestreo);
+            }
+        #endregion // endregion 2.5.4 Envolv Global  
+
+
+        #region 2.5.5 Unir todo 
+            //Reutilizamos los 13230 muestras de senos (wavetable basica)  --> Sin reutilizar, único, ocurre una sola vez.  
+            //               + 13230 muestras de ruidos       ---> Sin reutilizar, único, ocurre una sola vez.  
+            //               + 13230 muestras de envolventes  --> Sin reutilizar, único, ocurre una sola vez. 
+            //               + 13230 muestras de ataque       --> Sin reutilizar, único, ocurre una sola vez.
+            //                 para llenar las 13230 muestras de la señal completa de 0.3 segundos.
+            for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+            {
+                Ar_Senal[Muestra] = (
+                        Ar_WavetableMixDe5Senos[Muestra] * Ar_EnvolventeCuerpo[Muestra] * 0.08f
+                        + Ar_RuidoSuavizado[Muestra] * Ar_EnvolventeRuido[Muestra] * 0.82f
+                        + Ar_Ataque[Muestra] * 0.10f
+                    )
+                    * Ar_Envolvente[Muestra];
+
+                if (Muestra > Co_NumeroDeMuestras - 220)
+                {
+                    float Va_FadeFinal =(Co_NumeroDeMuestras - Muestra) / 220f;
+                    Ar_Senal[Muestra] *= Va_FadeFinal;
+                    Ar_Senal[Muestra] *= 1.5f;                
+                }
+            }
+        #endregion // endregion 2.5.5 Unir todo 
+
 
         #region 2.5.4.CrearAudioReprodu
 
@@ -584,200 +607,100 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
             // 9. Reproducir
             Re_AudioSourceCaja.Play();
         #endregion //endregion 2.5.4.CrearAudioReprodu
-    }
 
+    }
     #endregion // endregion de Fu_GenerarCaja()
 
 
-    #region 2.5 Fu_GenerarBAJO808()
+
+
+    #region 2.6 Fu_GenerarBAJO808()
 
         void Fu_GenerarBajo808()
         {
             Debug.Log("SE GENERÓ BAJO 808");
-
-            // ---------------------------------------------------------
-            // 1. DATOS GENERALES DEL AUDIO
-            // ---------------------------------------------------------
-
-            int Co_TamanoDeWavetable808 = 1024;
-
-            int Co_NumeroDeMuestras808 =
-                Mathf.RoundToInt(Co_FrecuenciaDeMuestreo * 0.8f);
 
             float[] Ar_Senal808 = new float[Co_NumeroDeMuestras808];
 
             float[] Ar_Wavetable808 =
                 new float[Co_TamanoDeWavetable808];
 
+            #region 2.6.1 WavetableSeno+2+3°A
+                // Se construye una onda principalmente senoidal.
+                // Se agregan armónicos muy pequeños para darle más cuerpo.
 
-            // ---------------------------------------------------------
-            // 2. CONSTRUIR WAVETABLE DEL BAJO
-            // ---------------------------------------------------------
-            // Se construye una onda principalmente senoidal.
-            // Se agregan armónicos muy pequeños para darle más cuerpo.
+                for (int Muestra = 0;
+                    Muestra < Co_TamanoDeWavetable808;
+                    Muestra++)
+                {
+                    float Va_FaseWavetable = 2f * Mathf.PI * Muestra / Co_TamanoDeWavetable808;
+                    float Va_SenoFundamental = Mathf.Sin(Va_FaseWavetable);
+                    float Va_SegundoArmonico = Mathf.Sin(Va_FaseWavetable * 2f);
+                    float Va_TercerArmonico = Mathf.Sin(Va_FaseWavetable * 3f);
+                    Ar_Wavetable808[Muestra] = (Va_SenoFundamental * 0.97f) + (Va_SegundoArmonico * 0.025f) + (Va_TercerArmonico * 0.005f);
+                }
+            #endregion // endregion de 2.6.1 WavetableSeno+2+3°A
 
-            for (int Muestra = 0;
-                Muestra < Co_TamanoDeWavetable808;
-                Muestra++)
-            {
-                float Va_FaseWavetable =
-                    2f * Mathf.PI * Muestra / Co_TamanoDeWavetable808;
-
-                float Va_SenoFundamental =
-                    Mathf.Sin(Va_FaseWavetable);
-
-                float Va_SegundoArmonico =
-                    Mathf.Sin(Va_FaseWavetable * 2f);
-
-                float Va_TercerArmonico =
-                    Mathf.Sin(Va_FaseWavetable * 3f);
-
-                Ar_Wavetable808[Muestra] =
-                    (Va_SenoFundamental * 0.97f)
-                    + (Va_SegundoArmonico * 0.025f)
-                    + (Va_TercerArmonico * 0.005f);
-            }
-
-
-            // ---------------------------------------------------------
-            // 3. GENERAR EL BAJO COMPLETO REUTILIZANDO LA WAVETABLE
-            // ---------------------------------------------------------
 
             float Va_Fase = 0f;
-
-            for (int Muestra = 0;
-                Muestra < Co_NumeroDeMuestras808;
-                Muestra++)
+            for (int Muestra = 0;  Muestra < Co_NumeroDeMuestras808; Muestra++)
             {
-                // Tiempo actual
-                float Va_Tiempo =
-                    (float)Muestra / Co_FrecuenciaDeMuestreo;
-
-
-                // -----------------------------------------------------
-                // 3.1 PITCH DROP DEL 808
-                // -----------------------------------------------------
-
-                float Va_Frecuencia =
-                    Va_FrecuenciaFinal808
-                    + (Va_FrecuenciaInicial808 - Va_FrecuenciaFinal808)
+                
+                #region 2.6.2 PitchDrop CaidaFrec
+                    float Va_Tiempo = (float)Muestra / Co_FrecuenciaDeMuestreo;  // Tiempo actual
+                    float Va_Frecuencia = Va_FrecuenciaFinal808 + (Va_FrecuenciaInicial808 - Va_FrecuenciaFinal808)
                     * Mathf.Exp(-Va_VelocidadDeCaida808 * Va_Tiempo);
+                #endregion // endregion de 2.6.2 PitchDrop CaidaFrec
 
 
-                // -----------------------------------------------------
-                // 3.2 AVANZAR EN LA WAVETABLE
-                // -----------------------------------------------------
-
-                Va_Fase +=
-                    Va_Frecuencia
-                    * Co_TamanoDeWavetable808
-                    / Co_FrecuenciaDeMuestreo;
-
-
-                // Cuando llega al final, vuelve al principio
-                if (Va_Fase >= Co_TamanoDeWavetable808)
-                {
-                    Va_Fase -= Co_TamanoDeWavetable808;
-                }
-
-
-int Va_IndiceWavetable =
-    Mathf.FloorToInt(Va_Fase);
-
-int Va_IndiceSiguiente =
-    (Va_IndiceWavetable + 1) % Co_TamanoDeWavetable808;
-
-float Va_Fraccion =
-    Va_Fase - Va_IndiceWavetable;
-
-float Va_Senal808 =
-    Mathf.Lerp(
-        Ar_Wavetable808[Va_IndiceWavetable],
-        Ar_Wavetable808[Va_IndiceSiguiente],
-        Va_Fraccion
-    );
+                #region 2.6.3 Interpolacion de la wavetable
+                    // Primero se calcula cuánto debe avanzar la fase según la frecuencia actual:
+                    Va_Fase += Va_Frecuencia * Co_TamanoDeWavetable808 / Co_FrecuenciaDeMuestreo;
+                    // Cuando llega al final, vuelve al principio
+                    if (Va_Fase >= Co_TamanoDeWavetable808)
+                    {
+                        Va_Fase -= Co_TamanoDeWavetable808;
+                    }
+                    // Después se identifican las dos posiciones consecutivas de la wavetable y se obtiene la parte decimal
+                    int Va_IndiceWavetable = Mathf.FloorToInt(Va_Fase);
+                    int Va_IndiceSiguiente = (Va_IndiceWavetable + 1) % Co_TamanoDeWavetable808;
+                    float Va_Fraccion = Va_Fase - Va_IndiceWavetable;
+                    // Se interpola
+                    float Va_Senal808 = Mathf.Lerp( Ar_Wavetable808[Va_IndiceWavetable], Ar_Wavetable808[Va_IndiceSiguiente], Va_Fraccion );
+                #endregion // endregion de 2.6.3 Interpolacion de la wavetable
 
 
-                // -----------------------------------------------------
-                // 3.3 ENVOLVENTE DE AMPLITUD
-                // -----------------------------------------------------
-
-                float Va_Envolvente =
-                    Mathf.Exp(
-                        -Va_VelocidadDeCaidaAmplitud808
-                        * Va_Tiempo
-                    );
+                #region 2.6.4 Envolvente
+                float Va_Envolvente = Mathf.Exp( -Va_VelocidadDeCaidaAmplitud808 * Va_Tiempo );
+                #endregion // endregion de 2.6.4 Envolvente
 
 
-                // -----------------------------------------------------
-                // 3.4 CONSTRUIR LA MUESTRA FINAL
-                // -----------------------------------------------------
-
-                Ar_Senal808[Muestra] =
-                    Va_Senal808
-                    * Va_Envolvente
-                    * Va_GananciaBajo808;
+                #region 2.6.5 Unir+Fade
+                    Ar_Senal808[Muestra] = Va_Senal808 * Va_Envolvente * Va_GananciaBajo808;
+                    // Fade para evitar terminar exactamente en un valor diferente de cero.
+                    for (int Muestras = 0; Muestras < Co_MuestrasFade808; Muestras++)
+                    {
+                        int Va_Indice =  Co_NumeroDeMuestras808 - Co_MuestrasFade808 + Muestras;
+                        float Va_FadeFinal = 1f - (float)Muestras / Co_MuestrasFade808;
+                        Ar_Senal808[Va_Indice] *= Va_FadeFinal;
+                    }
+                #endregion // endregion de 2.6.5 Unir+Fade
             }
 
-
-            // ---------------------------------------------------------
-            // 4. FADE FINAL
-            // ---------------------------------------------------------
-            // Evita terminar exactamente en un valor diferente de cero.
-
-            int Co_MuestrasFade808 = 1000;
-
-            for (int Muestra = 0;
-                Muestra < Co_MuestrasFade808;
-                Muestra++)
-            {
-                int Va_Indice =
-                    Co_NumeroDeMuestras808
-                    - Co_MuestrasFade808
-                    + Muestra;
-
-                float Va_FadeFinal =
-                    1f - (float)Muestra / Co_MuestrasFade808;
-
-                Ar_Senal808[Va_Indice] *= Va_FadeFinal;
-            }
-
-
-            // ---------------------------------------------------------
-            // 5. CREAR AUDIOCLIP
-            // ---------------------------------------------------------
-
-            AudioClip ClipBajo808 = AudioClip.Create(
-                "Bajo808Procedural",
-                Co_NumeroDeMuestras808,
-                1,
-                Co_FrecuenciaDeMuestreo,
-                false
-            );
-
-
-            // ---------------------------------------------------------
-            // 6. PASAR LAS MUESTRAS AL AUDIOCLIP
-            // ---------------------------------------------------------
-
-            ClipBajo808.SetData(Ar_Senal808, 0);
-
-
-            // ---------------------------------------------------------
-            // 7. ASIGNAR EL CLIP AL AUDIOSOURCE
-            // ---------------------------------------------------------
-
-            Re_AudioSourceBajo808.clip = ClipBajo808;
-
-
-            // ---------------------------------------------------------
-            // 8. REPRODUCIR
-            // ---------------------------------------------------------
-
-            Re_AudioSourceBajo808.Play();
+            #region 2.6.6 Crear AudioClip
+                AudioClip ClipBajo808 = AudioClip.Create( "Bajo808Procedural", Co_NumeroDeMuestras808, 1, Co_FrecuenciaDeMuestreo, false );
+                // Pasar las muestras al AudioClip
+                ClipBajo808.SetData(Ar_Senal808, 0);
+                // Asignar el clip al AudioSource del bajo 808
+                Re_AudioSourceBajo808.clip = ClipBajo808;
+                // Reproducir
+                Re_AudioSourceBajo808.Play();
+            #endregion // endregion de 2.6.6 Crear AudioClip
         }
 
     #endregion // endregion de Fu_GenerarBAJO808()
+
+
 
 
 #region 2.6 Fu_GenerarCHASQUIDO()
