@@ -155,11 +155,11 @@ public class CodigoDelJuego : MonoBehaviour
             Fu_GenerarChasquido();
         }
 
-// Si la tecla Ñ esta presionada, reproduce el aplauso sampleado
-if (Input.GetKeyDown(KeyCode.Semicolon))
-{
-    Fu_GenerarAplauso();
-}
+        // Si la tecla Ñ esta presionada, reproduce el aplauso sampleado
+        if (Input.GetKeyDown(KeyCode.Semicolon))
+        {
+            Fu_GenerarAplauso();
+        }
 
     }
     #endregion // endregion de Update
@@ -703,7 +703,7 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
 
 
 
-#region 2.7 Fu_GenerarCHASQUIDO()
+#region 2.7 Fu_GenerCHASQUIDO()
 
 void Fu_GenerarChasquido()
 {
@@ -738,7 +738,7 @@ void Fu_GenerarChasquido()
                 Ar_SenalSampleada[ Va_PosicionInicial + Muestra ] += Ar_MuestrasOriginales[ Va_MuestraInvertida ]; 
             }
         }
-    #endregion 2.7.2 InvertirRepetir4
+    #endregion // endregion de 2.7.2 InvertirRepetir4
 
 
     #region 2.7.3 Gnanacia-Volumen
@@ -746,209 +746,133 @@ void Fu_GenerarChasquido()
         {
             Ar_SenalSampleada[Muestra] *= 0.35f;
         }
-    #endregion 2.7.3 Gnanacia-Volumen
+    #endregion // endregion de 2.7.3 Gnanacia-Volumen
 
     #region 2.7.4.CrearAudioReprodu
         // Crear AudioClip
         AudioClip ClipChasquidoSampleado =  AudioClip.Create( "ChasquidoSampleado", Co_NumeroDeMuestras, Re_Chasquido.channels,Re_Chasquido.frequency, false  );
         // Pasar las muestras al AudioClip
         ClipChasquidoSampleado.SetData(  Ar_SenalSampleada,0);
-        // Asignar el clip al AudioSource de la caja
+        // Asignar el clip al AudioSource del chasquido
         Re_AudioSourceChasquido.clip = ClipChasquidoSampleado;
         // Reproducir
         Re_AudioSourceChasquido.Play();
-    #endregion 2.7.4.CrearAudioReprodu
+    #endregion // endregion de 2.7.4.CrearAudioReprodu
 }
 
-#endregion // endregion de 2.7 Fu_GenerarCHASQUIDO()
+#endregion // endregion de 2.7 Fu_GenerCHASQUIDO()
 
 
 
 
 
-#region 2.7 Fu_GenerarAPLAUSO()
+#region 2.7 Fu_GenerAPLAUSO()
 
-void Fu_GenerarAplauso()
-{
-    Debug.Log("SE GENERÓ APLAUSO POR SAMPLING");
-
-    int Co_MuestrasOriginales = Re_Aplauso.samples;
-
-    float[] Ar_MuestrasOriginales =
-        new float[Co_MuestrasOriginales];
-
-    Re_Aplauso.GetData(Ar_MuestrasOriginales, 0);
-
-    int Co_TotalRepeticiones = 6;
-
-    float[] Ar_Velocidades =
+    void Fu_GenerarAplauso()
     {
-        0.96f,
-        1.05f,
-        0.90f,
-        1.08f,
-        0.93f,
-        1.02f
-    };
+        Debug.Log("SE GENERÓ APLAUSO POR SAMPLING");
 
-    float[] Ar_Volumenes =
-    {
-        0.25f,
-        0.35f,
-        0.45f,
-        0.30f,
-        0.40f,
-        0.28f
-    };
 
-    float[] Ar_Desplazamientos =
-    {
-        0.00f,
-        0.14f,
-        0.28f,
-        0.42f,
-        0.56f,
-        0.70f
-    };
+        #region 2.7.1 CopiarGrabacion
+            //Primero se toma el AudioClip original almacenado en Re_Aplauso  (la grabación original) y se obtiene la cantidad de muestras que contiene. 
+            //Re_ Aplauso.samples permite conocer la cantidad de muestras del audio original. 
+            //Luego se crea el arreglo Ar_MuestrasOriginales para almacenarlas.
+            //Mediante GetData(), se copian los datos de amplitud del AudioClip al arreglo para poder procesarlos mediante código.
 
-    int[] Ar_MuestrasDeCopia =
-        new int[Co_TotalRepeticiones];
+            int Co_MuestrasOriginales = Re_Aplauso.samples;
+            float[] Ar_MuestrasOriginales = new float[Co_MuestrasOriginales];
+            Re_Aplauso.GetData(Ar_MuestrasOriginales, 0);
+        #endregion // endregion de 2.7.1 CopiarGrabacion
 
-    int Co_NumeroDeMuestras = 0;
 
-    for (int Repeticion = 0;
-         Repeticion < Co_TotalRepeticiones;
-         Repeticion++)
-    {
-        Ar_MuestrasDeCopia[Repeticion] =
-            Mathf.RoundToInt(
-                Co_MuestrasOriginales /
-                Ar_Velocidades[Repeticion]
-            );
 
-        int Va_PosicionFinal =
-            Mathf.RoundToInt(
-                Co_MuestrasOriginales *
-                Ar_Desplazamientos[Repeticion]
-            )
-            + Ar_MuestrasDeCopia[Repeticion];
+        #region 2.7.2 #VelocidVolDespla 
+            int Co_TotalRepeticiones = 2; //definir # de copias
+            
+            float[] Ar_Velocidades = { 0.96f, 1.05f, 0.90f, 1.08f, 0.93f, 1.02f }; //definir velocidad de cada copia
+            float[] Ar_Volumenes = {  0.25f,  0.35f, 0.45f, 0.30f, 0.40f, 0.28f }; //definir volumen de cada copia
+            float[] Ar_Desplazamientos = { 0.00f, 0.14f, 0.28f, 0.42f, 0.56f, 0.70f };
 
-        if (Va_PosicionFinal > Co_NumeroDeMuestras)
-        {
-            Co_NumeroDeMuestras =
-                Va_PosicionFinal;
-        }
-    }
+            int[] Ar_MuestrasDeCopia = new int[Co_TotalRepeticiones]; //Se crea un arreglo para almacenar la duración de cada copia:
+            int Co_NumeroDeMuestras = 0;
 
-    float[] Ar_SenalSampleada =
-        new float[Co_NumeroDeMuestras];
-
-    for (int Repeticion = 0;
-         Repeticion < Co_TotalRepeticiones;
-         Repeticion++)
-    {
-        int Va_PosicionInicial =
-            Mathf.RoundToInt(
-                Co_MuestrasOriginales *
-                Ar_Desplazamientos[Repeticion]
-            );
-
-        int Va_MuestrasDeCopia =
-            Ar_MuestrasDeCopia[Repeticion];
-
-        float Va_Volumen =
-            Ar_Volumenes[Repeticion];
-
-        float Va_Velocidad =
-            Ar_Velocidades[Repeticion];
-
-        for (int Muestra = 0;
-             Muestra < Va_MuestrasDeCopia;
-             Muestra++)
-        {
-            float Va_IndiceFuente =
-                Muestra * Va_Velocidad;
-
-            float Va_IndiceInvertido =
-                Co_MuestrasOriginales - 1
-                - Va_IndiceFuente;
-
-            if (Va_IndiceInvertido <= 0f)
+            for (int Repeticion = 0; Repeticion < Co_TotalRepeticiones; Repeticion++)
             {
-                break;
+                //Se calcula cuántas muestras tendrá cada repetición, porque dif velocidad posible dif numero de copias
+                Ar_MuestrasDeCopia[Repeticion] = Mathf.RoundToInt( Co_MuestrasOriginales /Ar_Velocidades[Repeticion] );
+                //se calcula hasta dónde llegará cada copia:
+                int Va_PosicionFinal =Mathf.RoundToInt(Co_MuestrasOriginales *Ar_Desplazamientos[Repeticion])+ Ar_MuestrasDeCopia[Repeticion];
+                //se determina cuál será la longitud necesaria para almacenar todas las copias
+                if (Va_PosicionFinal > Co_NumeroDeMuestras)
+                {
+                    Co_NumeroDeMuestras = Va_PosicionFinal;
+                }
             }
+            //Crear el arreglo de la señal resultante
+            float[] Ar_SenalSampleada =
+            new float[Co_NumeroDeMuestras];
+        #endregion // endregion de 2.7.2 #VelocidVolDespla 
 
-            int Va_IndiceInferior =
-                Mathf.FloorToInt(
-                    Va_IndiceInvertido
-                );
 
-            int Va_IndiceSuperior =
-                Va_IndiceInferior + 1;
 
-            if (Va_IndiceSuperior >=
-                Co_MuestrasOriginales)
+        #region 2.7.3 RepetInvertirInterpolar
+        for (int Repeticion = 0;  Repeticion < Co_TotalRepeticiones; Repeticion++)
+        {
+            int Va_PosicionInicial = Mathf.RoundToInt( Co_MuestrasOriginales *  Ar_Desplazamientos[Repeticion]);
+
+            int Va_MuestrasDeCopia = Ar_MuestrasDeCopia[Repeticion];
+            float Va_Volumen =Ar_Volumenes[Repeticion];
+            float Va_Velocidad =Ar_Velocidades[Repeticion];
+
+
+            for (int Muestra = 0;Muestra < Va_MuestrasDeCopia;Muestra++)
             {
-                Va_IndiceSuperior =
-                    Co_MuestrasOriginales - 1;
+                float Va_IndiceFuente =Muestra * Va_Velocidad;
+                float Va_IndiceInvertido =Co_MuestrasOriginales - 1- Va_IndiceFuente;
+                if (Va_IndiceInvertido <= 0f)
+                {
+                    break;
+                }
+                int Va_IndiceInferior =Mathf.FloorToInt(Va_IndiceInvertido);
+                int Va_IndiceSuperior =Va_IndiceInferior + 1;
+                if (Va_IndiceSuperior >=Co_MuestrasOriginales)
+                {
+                    Va_IndiceSuperior =Co_MuestrasOriginales - 1;
+                }
+
+                float Va_Fraccion =Va_IndiceInvertido -Va_IndiceInferior;
+                float Va_Muestra =Mathf.Lerp(Ar_MuestrasOriginales[Va_IndiceInferior],Ar_MuestrasOriginales[Va_IndiceSuperior],Va_Fraccion);
+                Va_Muestra *= Va_Volumen;
+                Ar_SenalSampleada[Va_PosicionInicial + Muestra] += Va_Muestra;
             }
-
-            float Va_Fraccion =
-                Va_IndiceInvertido -
-                Va_IndiceInferior;
-
-            float Va_Muestra =
-                Mathf.Lerp(
-                    Ar_MuestrasOriginales[
-                        Va_IndiceInferior
-                    ],
-                    Ar_MuestrasOriginales[
-                        Va_IndiceSuperior
-                    ],
-                    Va_Fraccion
-                );
-
-            Va_Muestra *= Va_Volumen;
-
-            Ar_SenalSampleada[
-                Va_PosicionInicial + Muestra
-            ] += Va_Muestra;
         }
+        #endregion // endregion de 2.7.3 RepetInvertirInterpolar
+
+
+        #region 2.7.5 Ganancia
+            float Va_GananciaFinal = 0.45f;
+
+            for (int Muestra = 0; Muestra < Co_NumeroDeMuestras;Muestra++)
+            {
+                Ar_SenalSampleada[Muestra] *=Va_GananciaFinal;
+            }
+        #endregion // endregion de 2.7.5 Ganancia
+
+
+        #region 2.7.6 CrearAudioReprod
+            // Crear AudioClip
+            AudioClip ClipAplausoSampleado = AudioClip.Create("AplausoSampleado",Co_NumeroDeMuestras,Re_Aplauso.channels,Re_Aplauso.frequency,false);
+            // Pasar las muestras al AudioClip
+            ClipAplausoSampleado.SetData(Ar_SenalSampleada,0);
+            // Asignar el clip al AudioSource del aplauso
+            Re_AudioSourceAplauso.clip =ClipAplausoSampleado;
+            // Reproducir
+            Re_AudioSourceAplauso.Play();
+        #endregion // endregion de 2.7.6 CrearAudioReprod
+
     }
 
-    float Va_GananciaFinal = 0.45f;
-
-    for (int Muestra = 0;
-         Muestra < Co_NumeroDeMuestras;
-         Muestra++)
-    {
-        Ar_SenalSampleada[Muestra] *=
-            Va_GananciaFinal;
-    }
-
-    AudioClip ClipAplausoSampleado =
-        AudioClip.Create(
-            "AplausoSampleado",
-            Co_NumeroDeMuestras,
-            Re_Aplauso.channels,
-            Re_Aplauso.frequency,
-            false
-        );
-
-    ClipAplausoSampleado.SetData(
-        Ar_SenalSampleada,
-        0
-    );
-
-    Re_AudioSourceAplauso.clip =
-        ClipAplausoSampleado;
-
-    Re_AudioSourceAplauso.Play();
-}
-
-#endregion
-
-
+#endregion //endregion de 2.7 Fu_GenerAPLAUSO()
 
 #endregion // endregion de metodos
 
