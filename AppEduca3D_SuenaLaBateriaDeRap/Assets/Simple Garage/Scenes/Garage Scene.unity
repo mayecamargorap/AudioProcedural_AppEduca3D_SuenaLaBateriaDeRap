@@ -539,7 +539,7 @@ GameObject:
   - component: {fileID: 717303588}
   - component: {fileID: 717303587}
   m_Layer: 0
-  m_Name: Audio-UnChasquidoDedos
+  m_Name: GameObject_Audio_Chasquido
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1519,14 +1519,18 @@ MonoBehaviour:
   Va_FrecuenciaDelGolpe: 2000
   Va_NivelDelGolpe: 0.25
   Va_VelocidadDeCaidaDelGolpe: 150
+  Va_Fase: 0
   Re_AudioSourceCaja: {fileID: 1389222942}
   Co_NumeroDeMuestras: 13230
   Re_AudioSourceBajo808: {fileID: 52519198}
+  Co_TamanoDeWavetable808: 1024
+  Co_NumeroDeMuestras808: 35280
   Va_FrecuenciaInicial808: 90
   Va_FrecuenciaFinal808: 45
   Va_VelocidadDeCaida808: 18
   Va_VelocidadDeCaidaAmplitud808: 5
   Va_GananciaBajo808: 1.2
+  Co_MuestrasFade808: 1000
   Re_AudioSourceChasquido: {fileID: 717303587}
   Re_AudioSourceAplauso: {fileID: 1345979712}
   Re_Chasquido: {fileID: 8300000, guid: 7262319f2f1477945bebdfadd0dce23e, type: 3}
