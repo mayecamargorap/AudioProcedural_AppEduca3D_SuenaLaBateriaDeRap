@@ -150,10 +150,10 @@ public class CodigoDelJuego : MonoBehaviour
         }
 
         // Si la tecla L esta presionada, reproduce el chasquido sampleado
-if (Input.GetKeyDown(KeyCode.L))
-{
-    Fu_GenerarChasquido();
-}
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            Fu_GenerarChasquido();
+        }
 
 // Si la tecla Ñ esta presionada, reproduce el aplauso sampleado
 if (Input.GetKeyDown(KeyCode.Semicolon))
@@ -703,81 +703,66 @@ if (Input.GetKeyDown(KeyCode.Semicolon))
 
 
 
-#region 2.6 Fu_GenerarCHASQUIDO()
+#region 2.7 Fu_GenerarCHASQUIDO()
 
 void Fu_GenerarChasquido()
 {
     Debug.Log("SE GENERÓ CHASQUIDO POR SAMPLING");
 
-    int Co_MuestrasOriginales = Re_Chasquido.samples;
+    #region 2.7.1 CopiarGrabacion
+        //Primero se toma el AudioClip original almacenado en Re_Chasquido  (la grabación original) y se obtiene la cantidad de muestras que contiene. 
+        //Re_Chasquido.samples permite conocer la cantidad de muestras del audio original. 
+        //Luego se crea el arreglo Ar_MuestrasOriginales para almacenarlas.
+        //Mediante GetData(), se copian los datos de amplitud del AudioClip al arreglo para poder procesarlos mediante código.
 
-    float[] Ar_MuestrasOriginales =
-        new float[Co_MuestrasOriginales];
+        int Co_MuestrasOriginales = Re_Chasquido.samples;
+        float[] Ar_MuestrasOriginales = new float[Co_MuestrasOriginales];
+        Re_Chasquido.GetData(Ar_MuestrasOriginales, 0);
+    #endregion // endregion de 2.7.1 CopiarGrabacion
 
-    Re_Chasquido.GetData(Ar_MuestrasOriginales, 0);
 
-    int Co_TotalRepeticiones = 3;
-
-    int Co_Desplazamiento =
-        Mathf.RoundToInt(Co_MuestrasOriginales * 0.30f);
-
-    int Co_NumeroDeMuestras =
-        Co_Desplazamiento * (Co_TotalRepeticiones - 1)
-        + Co_MuestrasOriginales;
-
-    float[] Ar_SenalSampleada =
-        new float[Co_NumeroDeMuestras];
-
-    for (int Repeticion = 0;
-         Repeticion < Co_TotalRepeticiones;
-         Repeticion++)
-    {
-        int Va_PosicionInicial =
-            Repeticion * Co_Desplazamiento;
-
-        for (int Muestra = 0;
-             Muestra < Co_MuestrasOriginales;
-             Muestra++)
+    #region 2.7.2 InvertirRepetir4
+        int Co_TotalRepeticiones = 4; //determina cuántas copias se realizarán
+        int Co_Desplazamiento = Mathf.RoundToInt(Co_MuestrasOriginales *0.08f); //establece qué tan separada estará cada copia respecto a la anterior.
+        int Co_NumeroDeMuestras = Co_Desplazamiento * (Co_TotalRepeticiones - 1) + Co_MuestrasOriginales;
+        float[] Ar_SenalSampleada = new float[Co_NumeroDeMuestras];
+    
+        for (int Repeticion = 0; Repeticion < Co_TotalRepeticiones; Repeticion++)
         {
-            int Va_MuestraInvertida =
-                Co_MuestrasOriginales - 1 - Muestra;
-
-            Ar_SenalSampleada[
-                Va_PosicionInicial + Muestra
-            ] += Ar_MuestrasOriginales[
-                Va_MuestraInvertida
-            ];
+            
+            int Va_PosicionInicial = Repeticion * Co_Desplazamiento; //se determina la posición inicial de cada copia:
+            for (int Muestra = 0; Muestra < Co_MuestrasOriginales; Muestra++)
+            {
+                int Va_MuestraInvertida = Co_MuestrasOriginales - 1 - Muestra; //se recorre la muestra original y se invierte su orden
+                //cada muestra invertida se suma a la señal resultante:
+                Ar_SenalSampleada[ Va_PosicionInicial + Muestra ] += Ar_MuestrasOriginales[ Va_MuestraInvertida ]; 
+            }
         }
-    }
+    #endregion 2.7.2 InvertirRepetir4
 
-    for (int Muestra = 0;
-         Muestra < Co_NumeroDeMuestras;
-         Muestra++)
-    {
-        Ar_SenalSampleada[Muestra] *= 0.35f;
-    }
 
-    AudioClip ClipChasquidoSampleado =
-        AudioClip.Create(
-            "ChasquidoSampleado",
-            Co_NumeroDeMuestras,
-            Re_Chasquido.channels,
-            Re_Chasquido.frequency,
-            false
-        );
+    #region 2.7.3 Gnanacia-Volumen
+        for (int Muestra = 0; Muestra < Co_NumeroDeMuestras; Muestra++)
+        {
+            Ar_SenalSampleada[Muestra] *= 0.35f;
+        }
+    #endregion 2.7.3 Gnanacia-Volumen
 
-    ClipChasquidoSampleado.SetData(
-        Ar_SenalSampleada,
-        0
-    );
-
-    Re_AudioSourceChasquido.clip =
-        ClipChasquidoSampleado;
-
-    Re_AudioSourceChasquido.Play();
+    #region 2.7.4.CrearAudioReprodu
+        // Crear AudioClip
+        AudioClip ClipChasquidoSampleado =  AudioClip.Create( "ChasquidoSampleado", Co_NumeroDeMuestras, Re_Chasquido.channels,Re_Chasquido.frequency, false  );
+        // Pasar las muestras al AudioClip
+        ClipChasquidoSampleado.SetData(  Ar_SenalSampleada,0);
+        // Asignar el clip al AudioSource de la caja
+        Re_AudioSourceChasquido.clip = ClipChasquidoSampleado;
+        // Reproducir
+        Re_AudioSourceChasquido.Play();
+    #endregion 2.7.4.CrearAudioReprodu
 }
 
-#endregion
+#endregion // endregion de 2.7 Fu_GenerarCHASQUIDO()
+
+
 
 
 
