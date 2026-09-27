@@ -1071,7 +1071,7 @@ GameObject:
   - component: {fileID: 1345979713}
   - component: {fileID: 1345979712}
   m_Layer: 0
-  m_Name: Audio_UnAplauso
+  m_Name: GameObject_Audio_Aplauso
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
