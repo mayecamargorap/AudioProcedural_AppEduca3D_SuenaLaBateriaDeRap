@@ -15,8 +15,9 @@
 // prefijo Ob_ → objeto
 // prefijo Re_ → referencia
 // prefijo Ar_ → arreglo
-
 using UnityEngine;
+using UnityEngine.Audio;
+
 
 public class CodigoDelJuego : MonoBehaviour
 {
@@ -98,6 +99,16 @@ public class CodigoDelJuego : MonoBehaviour
     public AudioClip Re_Chasquido;
     public AudioClip Re_Aplauso;
 
+    // --------------------------------- Variables del Audio de la Música de fondo ----------------------------------
+    [Header("Variables del Audio de la Música de fondo")]
+    public AudioSource Re_AudioSourceMusicaBajo;
+    public AudioSource Re_AudioSourceMusicaBateria;
+    public AudioSource Re_AudioSourceMusicaOtros;
+    public GameObject Re_ZonaFondo;
+    public GameObject Re_ZonaFrente;
+    public AudioMixer Re_AudioMixer;
+    
+
 #endregion
 
 #region 2 Metodos
@@ -110,13 +121,14 @@ public class CodigoDelJuego : MonoBehaviour
     // ------------------------------------------ Metodo Start ------------------------------------------
     void Start()
     {
-        //Fu_GenerarHiHat();
+        Fu_IniciarMusicaFondo();
     }
     #endregion // endregion de Start
 
     #region 2.2 Fu_Update()
     void Update()   
     {
+        
         // MOVIMIENTO DEL PERSONAJE
         float Va_MovimientoX = Input.GetAxis("Horizontal");
         float Va_MovimientoZ = Input.GetAxis("Vertical");
@@ -160,6 +172,12 @@ public class CodigoDelJuego : MonoBehaviour
         {
             Fu_GenerarAplauso();
         }
+        // Música dinámica por zona
+        Fu_ActualizarMusicaFondo();
+
+        // Cambio adaptativo del bajo
+        Fu_ActualizarBajoMusica();
+        
 
     }
     #endregion // endregion de Update
@@ -874,6 +892,68 @@ void Fu_GenerarChasquido()
 
 #endregion //endregion de 2.7 Fu_GenerAPLAUSO()
 
+void Fu_IniciarMusicaFondo()
+{
+    Re_AudioSourceMusicaBajo.Play();
+    Re_AudioSourceMusicaBateria.Play();
+    Re_AudioSourceMusicaOtros.Play();
+}
+
 #endregion // endregion de metodos
+
+
+void Fu_ActualizarMusicaFondo()
+{
+    float Va_PosicionZJugador = transform.position.z;
+
+    // Frente (-2) = ALTO
+    // Fondo (+2) = SUAVE
+    float Va_Progreso =
+        Mathf.InverseLerp(
+            -2f,
+            2f,
+            Va_PosicionZJugador
+        );
+
+    float Va_VolumenObjetivo =
+        Mathf.Lerp(
+            0f,      // Frente: 0 dB = máximo
+            -30f,    // Fondo: -30 dB = muy suave
+            Va_Progreso
+        );
+
+    Re_AudioMixer.SetFloat(
+        "VolumenMusicaFondo",
+        Va_VolumenObjetivo
+    );
+}
+
+
+void Fu_ActualizarBajoMusica()
+{
+    float Va_PosicionZJugador = transform.position.z;
+
+    float Va_Progreso =
+        Mathf.InverseLerp(
+            -2.55f,
+            3.72f,
+            Va_PosicionZJugador
+        );
+
+    // En el fondo → sin bajo
+    // En el frente/inicio → bajo presente
+
+    float Va_VolumenBajo =
+        Mathf.Lerp(
+            0f,
+            0.40f,
+            Va_Progreso
+        );
+
+    Re_AudioSourceMusicaBajo.volume =
+        Va_VolumenBajo;
+}
+
+
 
 }
