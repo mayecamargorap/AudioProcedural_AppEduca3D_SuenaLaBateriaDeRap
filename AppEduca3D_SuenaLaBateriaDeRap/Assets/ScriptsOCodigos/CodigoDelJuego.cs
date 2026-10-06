@@ -100,13 +100,24 @@ public class CodigoDelJuego : MonoBehaviour
     public AudioClip Re_Aplauso;
 
     // --------------------------------- Variables del Audio de la Música de fondo ----------------------------------
-    [Header("Variables del Audio de la Música de fondo")]
+    [Header("Variables del Audio de la Música de fondo")]    
     public AudioSource Re_AudioSourceMusicaBajo;
     public AudioSource Re_AudioSourceMusicaBateria;
     public AudioSource Re_AudioSourceMusicaOtros;
+
     public GameObject Re_ZonaFondo;
     public GameObject Re_ZonaFrente;
+
     public AudioMixer Re_AudioMixer;
+
+    public BoxCollider Re_ColliderZonaFondo;
+    public BoxCollider Re_ColliderZonaFrente;
+
+    public AudioSource Re_AudioSourceMusicaLlegasteTu;
+    public AudioSource Re_AudioSourceMusicaAmbientePad;
+
+    bool Va_EstaEnZonaFrente = true; //inicialmente asumimos que está en ZonaFrente
+    bool Va_EstaEnZonaFondo = false;
     
 
 #endregion
@@ -121,7 +132,7 @@ public class CodigoDelJuego : MonoBehaviour
     // ------------------------------------------ Metodo Start ------------------------------------------
     void Start()
     {
-        Fu_IniciarMusicaFondo();
+
     }
     #endregion // endregion de Start
 
@@ -133,7 +144,7 @@ public class CodigoDelJuego : MonoBehaviour
         float Va_MovimientoX = Input.GetAxis("Horizontal");
         float Va_MovimientoZ = Input.GetAxis("Vertical");
 
-        Vector3 Ve_Movimiento = new Vector3(-Va_MovimientoX, 0f, -Va_MovimientoZ);
+        Vector3 Ve_Movimiento = new Vector3(-Va_MovimientoX, 0f, Va_MovimientoZ);
 
         transform.Translate(Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime);
 
@@ -173,11 +184,10 @@ public class CodigoDelJuego : MonoBehaviour
             Fu_GenerarAplauso();
         }
         // Música dinámica por zona
-        Fu_ActualizarMusicaFondo();
+        Fu_ActualizarMusicaPorZonaAudioDinamico();
+        Fu_ActualizarVolumenMusicaAdaptativo();
 
-        // Cambio adaptativo del bajo
-        Fu_ActualizarBajoMusica();
-        
+      
 
     }
     #endregion // endregion de Update
@@ -892,68 +902,62 @@ void Fu_GenerarChasquido()
 
 #endregion //endregion de 2.7 Fu_GenerAPLAUSO()
 
-void Fu_IniciarMusicaFondo()
+
+#region 2.8 AudioDinamico()
+void Fu_ActualizarMusicaPorZonaAudioDinamico()
 {
-    Re_AudioSourceMusicaBajo.Play();
-    Re_AudioSourceMusicaBateria.Play();
-    Re_AudioSourceMusicaOtros.Play();
+    // Si está en ZonaFrente
+    if (Re_ColliderZonaFrente.bounds.Contains(transform.position))
+    {
+        if (!Va_EstaEnZonaFrente)
+        {
+            Re_AudioSourceMusicaAmbientePad.Stop();
+            Re_AudioSourceMusicaLlegasteTu.Play();
+
+            Va_EstaEnZonaFrente = true;
+            Va_EstaEnZonaFondo = false;
+        }
+    }
+
+    // Si está en ZonaFondo
+    if (Re_ColliderZonaFondo.bounds.Contains(transform.position))
+    {
+        if (!Va_EstaEnZonaFondo)
+        {
+            Re_AudioSourceMusicaLlegasteTu.Stop();
+            Re_AudioSourceMusicaAmbientePad.Play();
+
+            Va_EstaEnZonaFondo = true;
+            Va_EstaEnZonaFrente = false;
+        }
+    }
 }
 
-#endregion // endregion de metodos
+#endregion //endregion de 2.8 AudioDinamico()
 
-
-void Fu_ActualizarMusicaFondo()
+#region 2.9 AudioAdaptativo()
+void Fu_ActualizarVolumenMusicaAdaptativo()
 {
     float Va_PosicionZJugador = transform.position.z;
 
-    // Frente (-2) = ALTO
-    // Fondo (+2) = SUAVE
-    float Va_Progreso =
+    float Va_VolumenObjetivo = Mathf.Lerp(
+        -30f, //-30 dB  → muy bajo
+        0f,  //0 dB    → alto
         Mathf.InverseLerp(
-            -2f,
-            2f,
+            -3.50f,
+            2.78f,
             Va_PosicionZJugador
-        );
-
-    float Va_VolumenObjetivo =
-        Mathf.Lerp(
-            0f,      // Frente: 0 dB = máximo
-            -30f,    // Fondo: -30 dB = muy suave
-            Va_Progreso
-        );
+        )
+    );
 
     Re_AudioMixer.SetFloat(
         "VolumenMusicaFondo",
         Va_VolumenObjetivo
     );
 }
+#endregion //endregion de 2.8 AudioAdaptativo()
 
 
-void Fu_ActualizarBajoMusica()
-{
-    float Va_PosicionZJugador = transform.position.z;
-
-    float Va_Progreso =
-        Mathf.InverseLerp(
-            -2.55f,
-            3.72f,
-            Va_PosicionZJugador
-        );
-
-    // En el fondo → sin bajo
-    // En el frente/inicio → bajo presente
-
-    float Va_VolumenBajo =
-        Mathf.Lerp(
-            0f,
-            0.40f,
-            Va_Progreso
-        );
-
-    Re_AudioSourceMusicaBajo.volume =
-        Va_VolumenBajo;
-}
-
-
+#endregion // endregion de metodos
 
 }
