@@ -144,9 +144,12 @@ public class CodigoDelJuego : MonoBehaviour
         float Va_MovimientoX = Input.GetAxis("Horizontal");
         float Va_MovimientoZ = Input.GetAxis("Vertical");
 
-        Vector3 Ve_Movimiento = new Vector3(-Va_MovimientoX, 0f, Va_MovimientoZ);
+        Vector3 Ve_Movimiento = new Vector3(Va_MovimientoX, 0f,-Va_MovimientoZ);
 
-        transform.Translate(Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime);
+        transform.Translate(
+            Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime,
+            Space.World
+        );
 
         // Si la tecla G esta presionada, reproduzca sonido de hihat
         if (Input.GetKeyDown(KeyCode.G))
