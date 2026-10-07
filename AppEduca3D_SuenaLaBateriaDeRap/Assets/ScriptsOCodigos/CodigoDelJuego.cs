@@ -32,6 +32,7 @@ public class CodigoDelJuego : MonoBehaviour
     [Header("Variables del Personaje")]
     public float Va_VelocidadDelPersonaje = 3f;
     public Rigidbody Re_RigidbodyPersonaje;
+    public Animator Re_AnimatorPersonaje;
 
     [Header("Instrumentos por contacto")]
     public GameObject Re_HiHat;
@@ -144,6 +145,7 @@ public class CodigoDelJuego : MonoBehaviour
     void Start()
     {
         Re_RigidbodyPersonaje = GetComponent<Rigidbody>();
+        Re_AnimatorPersonaje = GetComponent<Animator>();
     }
     #endregion // endregion de Start
 
@@ -207,6 +209,10 @@ public class CodigoDelJuego : MonoBehaviour
         float Va_MovimientoX = Input.GetAxis("Horizontal");
         float Va_MovimientoZ = Input.GetAxis("Vertical");
 
+        bool Va_EstaCaminando = Mathf.Abs(Va_MovimientoX) > 0.01f || Mathf.Abs(Va_MovimientoZ) > 0.01f;
+
+        Re_AnimatorPersonaje.SetBool("EstaCaminando", Va_EstaCaminando);
+
         Vector3 Ve_Movimiento = new Vector3(
             Va_MovimientoX,
             0f,
@@ -218,6 +224,29 @@ public class CodigoDelJuego : MonoBehaviour
             Ve_Movimiento * Va_VelocidadDelPersonaje * Time.fixedDeltaTime;
 
         Re_RigidbodyPersonaje.MovePosition(Ve_NuevaPosicion);
+
+        // GIRO DEL PERSONAJE SEGÚN LA DIRECCIÓN DEL MOVIMIENTO
+
+        if (Va_MovimientoX > 0)
+        {
+            // Flecha derecha
+            transform.rotation = Quaternion.Euler(-180f, -90f, 0f);
+        }
+        else if (Va_MovimientoX < 0)
+        {
+            // Flecha izquierda
+            transform.rotation = Quaternion.Euler(-180f, 90f, 0f);
+        }
+        else if (Va_MovimientoZ > 0)
+        {
+            // Flecha arriba → va hacia el fondo y da la espalda
+            transform.rotation = Quaternion.Euler(-180f, 0f, 0f);
+        }
+        else if (Va_MovimientoZ < 0)
+        {
+            // Flecha abajo → viene hacia nosotros y nos mira
+            transform.rotation = Quaternion.Euler(-180f, -180f, 0f);
+        }
     }
 
     #region 2.3 Fu_GenerarHIHAT()
@@ -991,21 +1020,25 @@ void Fu_GenerarChasquido()
     {
         if (Re_Colision.transform == Re_HiHat.transform)
         {
+            Re_AnimatorPersonaje.SetTrigger("TocarHiHat");
             StartCoroutine(Fu_ReproducirHiHatPorContacto());
         }
 
         if (Re_Colision.transform == Re_Bombo.transform)
         {
+            Re_AnimatorPersonaje.SetTrigger("TocarBombo");
             StartCoroutine(Fu_ReproducirBomboPorContacto());
         }
 
         if (Re_Colision.transform == Re_Caja.transform)
         {
+            Re_AnimatorPersonaje.SetTrigger("TocarCaja");
             StartCoroutine(Fu_ReproducirCajaPorContacto());
         }
 
         if (Re_Colision.transform == Re_Bajo808.transform)
         {
+            Re_AnimatorPersonaje.SetTrigger("TocarBajo808");
             StartCoroutine(Fu_ReproducirBajo808PorContacto());
         }
     }
