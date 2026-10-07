@@ -15,6 +15,7 @@
 // prefijo Ob_ → objeto
 // prefijo Re_ → referencia
 // prefijo Ar_ → arreglo
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -30,6 +31,14 @@ public class CodigoDelJuego : MonoBehaviour
     // ------------------------------------------ Variables del personaje ------------------------------------------
     [Header("Variables del Personaje")]
     public float Va_VelocidadDelPersonaje = 3f;
+    public Rigidbody Re_RigidbodyPersonaje;
+
+    [Header("Instrumentos por contacto")]
+    public GameObject Re_HiHat;
+    public GameObject Re_Bombo;
+    public GameObject Re_Caja;
+    public GameObject Re_Bajo808;
+
 
     // ------------------------------------------ Variables del audio HiHat ------------------------------------------
     [Header("Variables del HiHat")]
@@ -118,6 +127,8 @@ public class CodigoDelJuego : MonoBehaviour
 
     bool Va_EstaEnZonaFrente = true; //inicialmente asumimos que está en ZonaFrente
     bool Va_EstaEnZonaFondo = false;
+
+
     
 
 #endregion
@@ -132,24 +143,18 @@ public class CodigoDelJuego : MonoBehaviour
     // ------------------------------------------ Metodo Start ------------------------------------------
     void Start()
     {
-
+        Re_RigidbodyPersonaje = GetComponent<Rigidbody>();
     }
     #endregion // endregion de Start
 
+
+
+    //audios + música
     #region 2.2 Fu_Update()
     void Update()   
     {
         
-        // MOVIMIENTO DEL PERSONAJE
-        float Va_MovimientoX = Input.GetAxis("Horizontal");
-        float Va_MovimientoZ = Input.GetAxis("Vertical");
 
-        Vector3 Ve_Movimiento = new Vector3(Va_MovimientoX, 0f,-Va_MovimientoZ);
-
-        transform.Translate(
-            Ve_Movimiento * Va_VelocidadDelPersonaje * Time.deltaTime,
-            Space.World
-        );
 
         // Si la tecla G esta presionada, reproduzca sonido de hihat
         if (Input.GetKeyDown(KeyCode.G))
@@ -190,12 +195,30 @@ public class CodigoDelJuego : MonoBehaviour
         Fu_ActualizarMusicaPorZonaAudioDinamico();
         Fu_ActualizarVolumenMusicaAdaptativo();
 
+
       
 
     }
     #endregion // endregion de Update
 
+    //movimiento físico de Charmander
+    void FixedUpdate()
+    {
+        float Va_MovimientoX = Input.GetAxis("Horizontal");
+        float Va_MovimientoZ = Input.GetAxis("Vertical");
 
+        Vector3 Ve_Movimiento = new Vector3(
+            Va_MovimientoX,
+            0f,
+            -Va_MovimientoZ
+        );
+
+        Vector3 Ve_NuevaPosicion =
+            Re_RigidbodyPersonaje.position +
+            Ve_Movimiento * Va_VelocidadDelPersonaje * Time.fixedDeltaTime;
+
+        Re_RigidbodyPersonaje.MovePosition(Ve_NuevaPosicion);
+    }
 
     #region 2.3 Fu_GenerarHIHAT()
     void Fu_GenerarHiHat()
@@ -907,59 +930,131 @@ void Fu_GenerarChasquido()
 
 
 #region 2.8 AudioDinamico()
-void Fu_ActualizarMusicaPorZonaAudioDinamico()
-{
-    // Si está en ZonaFrente
-    if (Re_ColliderZonaFrente.bounds.Contains(transform.position))
+    void Fu_ActualizarMusicaPorZonaAudioDinamico()
     {
-        if (!Va_EstaEnZonaFrente)
+        // Si está en ZonaFrente
+        if (Re_ColliderZonaFrente.bounds.Contains(transform.position))
         {
-            Re_AudioSourceMusicaAmbientePad.Stop();
-            Re_AudioSourceMusicaLlegasteTu.Play();
+            if (!Va_EstaEnZonaFrente)
+            {
+                Re_AudioSourceMusicaAmbientePad.Stop();
+                Re_AudioSourceMusicaLlegasteTu.Play();
 
-            Va_EstaEnZonaFrente = true;
-            Va_EstaEnZonaFondo = false;
+                Va_EstaEnZonaFrente = true;
+                Va_EstaEnZonaFondo = false;
+            }
+        }
+
+        // Si está en ZonaFondo
+        if (Re_ColliderZonaFondo.bounds.Contains(transform.position))
+        {
+            if (!Va_EstaEnZonaFondo)
+            {
+                Re_AudioSourceMusicaLlegasteTu.Stop();
+                Re_AudioSourceMusicaAmbientePad.Play();
+
+                Va_EstaEnZonaFondo = true;
+                Va_EstaEnZonaFrente = false;
+            }
         }
     }
-
-    // Si está en ZonaFondo
-    if (Re_ColliderZonaFondo.bounds.Contains(transform.position))
-    {
-        if (!Va_EstaEnZonaFondo)
-        {
-            Re_AudioSourceMusicaLlegasteTu.Stop();
-            Re_AudioSourceMusicaAmbientePad.Play();
-
-            Va_EstaEnZonaFondo = true;
-            Va_EstaEnZonaFrente = false;
-        }
-    }
-}
 
 #endregion //endregion de 2.8 AudioDinamico()
 
 #region 2.9 AudioAdaptativo()
-void Fu_ActualizarVolumenMusicaAdaptativo()
-{
-    float Va_PosicionZJugador = transform.position.z;
+    void Fu_ActualizarVolumenMusicaAdaptativo()
+    {
+        float Va_PosicionZJugador = transform.position.z;
 
-    float Va_VolumenObjetivo = Mathf.Lerp(
-        -30f, //-30 dB  → muy bajo
-        0f,  //0 dB    → alto
-        Mathf.InverseLerp(
-            -3.50f,
-            2.78f,
-            Va_PosicionZJugador
-        )
-    );
+        float Va_VolumenObjetivo = Mathf.Lerp(
+            -30f, //-30 dB  → muy bajo
+            0f,  //0 dB    → alto
+            Mathf.InverseLerp(
+                -3.50f,
+                2.78f,
+                Va_PosicionZJugador
+            )
+        );
 
-    Re_AudioMixer.SetFloat(
-        "VolumenMusicaFondo",
-        Va_VolumenObjetivo
-    );
-}
+        Re_AudioMixer.SetFloat(
+            "VolumenMusicaFondo",
+            Va_VolumenObjetivo
+        );
+    }
 #endregion //endregion de 2.8 AudioAdaptativo()
 
+
+
+    #region 2.12 ContactoConInstrumentos
+
+    private void OnCollisionEnter(Collision Re_Colision)
+    {
+        if (Re_Colision.transform == Re_HiHat.transform)
+        {
+            StartCoroutine(Fu_ReproducirHiHatPorContacto());
+        }
+
+        if (Re_Colision.transform == Re_Bombo.transform)
+        {
+            StartCoroutine(Fu_ReproducirBomboPorContacto());
+        }
+
+        if (Re_Colision.transform == Re_Caja.transform)
+        {
+            StartCoroutine(Fu_ReproducirCajaPorContacto());
+        }
+
+        if (Re_Colision.transform == Re_Bajo808.transform)
+        {
+            StartCoroutine(Fu_ReproducirBajo808PorContacto());
+        }
+    }
+
+    #endregion
+
+
+
+
+    //corutinas para reproducir sonidos por contacto
+    #region 2.11 SonidosPorContacto
+
+    IEnumerator Fu_ReproducirHiHatPorContacto()
+    {
+        for (int Repeticion = 0; Repeticion < 3; Repeticion++)
+        {
+            Fu_GenerarHiHat();
+            yield return new WaitForSeconds(0.35f);
+        }
+    }
+
+    IEnumerator Fu_ReproducirBomboPorContacto()
+    {
+        for (int Repeticion = 0; Repeticion < 3; Repeticion++)
+        {
+            Fu_GenerarBombo();
+            yield return new WaitForSeconds(0.35f);
+        }
+    }
+
+    IEnumerator Fu_ReproducirCajaPorContacto()
+    {
+        for (int Repeticion = 0; Repeticion < 3; Repeticion++)
+        {
+            Fu_GenerarCaja();
+            yield return new WaitForSeconds(0.35f);
+        }
+    }
+
+    IEnumerator Fu_ReproducirBajo808PorContacto()
+    {
+        for (int Repeticion = 0; Repeticion < 3; Repeticion++)
+        {
+            Fu_GenerarBajo808();
+            yield return new WaitForSeconds(0.8f);
+        }
+    }
+
+    #endregion
 
 #endregion // endregion de metodos
 
